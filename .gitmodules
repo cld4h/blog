@@ -1,0 +1,3 @@
+[submodule "themes/learn"]
+	path = themes/learn
+	url = git@github.com:cld4h/hugo-theme-learn.git

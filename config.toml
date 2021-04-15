@@ -1,0 +1,7 @@
+baseURL = "https://cld4h.github.io"
+languageCode = "en-us"
+title = "cld4h"
+theme = "learn"
+[params]
+  # Change default color scheme with a variant one. Can be "red", "blue", "green".
+  themeVariant = "blue"
