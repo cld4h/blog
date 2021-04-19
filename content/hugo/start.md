@@ -1,7 +1,7 @@
 ---
 title: "Start Hugo"
 date: 2021-03-24T12:18:03+08:00
-draft: true
+draft: false
 ---
 
 First install hugo on your system
@@ -48,3 +48,5 @@ Start locally
 ```
 hugo serve -D
 ```
+
+[Learn theme docs](https://learn.netlify.app/en/)
