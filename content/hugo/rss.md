@@ -15,8 +15,8 @@ I copied the [default RSS template that ships with Hugo](https://github.com/gohu
 >     {{ range .Site.Pages }}
 ```
 
-I add the following line to my `layouts/partials/menu-footer.html`
+I added the following line to my `layouts/partials/menu-footer.html`
 
 ```
-<p><a href="{{.Site.BaseURL}}index.xml"><i class="fas fa-rss"></i> RSS</a></p>
+<p><a href="{{.Site.BaseURL}}/index.xml"><i class="fas fa-rss"></i> RSS</a></p>
 ```
