@@ -20,6 +20,7 @@ draft: true
 
 通过old的1000组可以预测python随机数，
 https://github.com/tna0y/Python-random-module-cracker
+
 一共2轮aes加密，既然密钥可以预测出来，自然就能解密得到clist。
 
 ![lrlr.png](lrlr.png)
@@ -131,13 +132,14 @@ for i in range(10000):
 
 [参考 一叶飘零 的 Crypto-RSA-公钥攻击小结](https://xz.aliyun.com/t/2731#toc-10)
 [参考 ashutosh1206 的 Hastad's Broadcast Attack](https://github.com/ashutosh1206/Crypton/tree/master/RSA-encryption/Attack-Hastad-Broadcast)
-所谓“低指数”，指的是指数$e <= \text{广播成员数量(加密的消息数量)}$
+所谓“低指数”，指的是指数 $e <= \text{广播成员数量(加密的消息数量)}$
 <!--假设 Alice 想要给 3 个不同的人发送相同的消息 $M$, 对每个人使用同样的公钥指数 $e$ 和不同的 $n$-->
 
 #### 中国剩余定理
 
 对于下面的一元线性同余方程组：
 
+{{< rawhtml >}}
 $$
 \begin{equation*}
 \left\lbrace
@@ -150,6 +152,7 @@ $$
 \right.
 \end{equation*}
 $$
+{{< /rawhtml >}}
 
 假设$m_1,m_2,\ldots,m_n$中任意两数互质，则对任意整数$a_1,a_2,\ldots,a_n$，上述方程组有解，通解的构造方法如下：
 
@@ -167,6 +170,7 @@ $$
 
 因此，对于本题
 
+{{< rawhtml >}}
 $$
 \begin{equation*}
 \left\lbrace
@@ -179,6 +183,7 @@ m^{17} \equiv & c_{17} \bmod n_{17}\\
 \right.
 \end{equation*}
 $$
+{{< /rawhtml >}}
 
 (要求$n_1,n_2,\ldots,n_{17}$两两互素，若不满足两两互素，可进行[共模攻击](https://github.com/ashutosh1206/Crypton/tree/master/RSA-encryption/Attack-Common-Prime))有
 
