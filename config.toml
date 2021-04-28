@@ -9,3 +9,7 @@ theme = "learn"
 name = "<i class='fas fa-tags'></i> Tags"
 url = "/tags"
 weight = 30
+[[menu.shortcuts]]
+name = "<i class='fas fa-link'></i> Links"
+url = "/links"
+weight = 30
