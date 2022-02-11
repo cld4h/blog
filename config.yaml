@@ -193,7 +193,7 @@ menu:
 
         - identifier: rss
           name: RSS
-          url: https://cld4h.github.io/index.xml
+          url: index.xml
           params:
               icon: rss
 
@@ -202,6 +202,11 @@ menu:
           url: mailto:cld4h@disroot.org
           params:
               icon: email
+
+        - identifier: xmpp
+          name: xmpp:cld4h@disroot.org
+          params:
+              icon: messages
 
 related:
     includeNewer: true
