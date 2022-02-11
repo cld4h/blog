@@ -197,6 +197,12 @@ menu:
           params:
               icon: rss
 
+        - identifier: email
+          name: email
+          url: mailto:cld4h@disroot.org
+          params:
+              icon: email
+
 related:
     includeNewer: true
     threshold: 60
