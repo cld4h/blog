@@ -2,9 +2,10 @@
 title: About
 description: 关于我...
 date: '2022-02-13'
+toc: false
 menu:
     main:
-        weight: -90
+        weight: -50
         params:
             icon: user
 ---
