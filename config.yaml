@@ -16,7 +16,21 @@ DefaultContentLanguage: en
 
 # Set hasCJKLanguage to true if DefaultContentLanguage is in [zh-cn ja ko]
 # This will make .Summary and .WordCount behave correctly for CJK languages.
-hasCJKLanguage: false
+hasCJKLanguage: true
+
+languages:
+  en:
+    languageName: "English"
+    title: cld4h's blog
+    weight: 1
+  zh-tw:
+    languageName: "中文正體"
+    title: cld4h 的部落格
+    weight: 2
+  zh-cn:
+    languageName: "中文简体"
+    title: cld4h 的博客
+    weight: 3
 
 permalinks:
     post: /p/:slug/

@@ -1,8 +1,9 @@
 ---
 title: About
-description: 关于我...
+description: About me...
 date: '2022-02-13'
 toc: false
+defaultContentLanguage: en
 menu:
     main:
         weight: -50
@@ -12,8 +13,19 @@ menu:
 
 Hi!
 
-### xmpp
+## Things I like
 
-我的xmpp地址是
+* [Free software](https://www.gnu.org/philosophy/)
+* Self sufficiency
+* DIY & repair
+* Piano & music 🎹
+
+## Things I hate
+
+* Smoking 🚭
+
+## xmpp
+
+My xmpp Address is:
 
 [xmpp:cld4h@disroot.org](xmpp:cld4h@disroot.org)
