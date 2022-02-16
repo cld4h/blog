@@ -1,7 +1,7 @@
 ---
 title: "Mass Surveillance"
 date: 2021-04-29T08:25:00+08:00
-tags: ["surveillance","social control"]
+tags: ["surveillance","social control","on the same page"]
 image: img2.jpg
 ---
 
@@ -20,6 +20,6 @@ image: img2.jpg
 正如马丁・路德・金的这句名言:
 > 手段代表了在形成之中的理想和进行之中的目的，人们无法通过邪恶的手段来达到美好的目的。因为手段是种子，目的是树。
 
-常常有人代表自己或者代表🇨🇳人说类似「我们不在乎隐私」这类话，
+常常有人代表自己或者代表中国人说类似「我们不在乎隐私」这类话，
 借用 Edward Snowden 的类比就能明白它们真正的意思:
 > 辩称自己不在乎隐私因为自己没什么需要藏着的，无异于说自己不在乎言论自由因为自己没什么要说的。
