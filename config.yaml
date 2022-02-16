@@ -207,7 +207,7 @@ menu:
 
         - identifier: rss
           name: RSS
-          url: /index.xml
+          url: "/about/#rss-links"
           params:
               icon: rss
 

@@ -24,6 +24,16 @@ menu:
 
 * 抽烟 🚭
 
+## rss 订阅链接
+
+注意：**不同**语言下有**不同**的文章，全部订阅以接收完整内容
+
+[English]({{<relref path="/" outputFormat="rss">}})
+
+[中文正體]({{<relref path="/" outputFormat="rss" lang="zh-tw">}})
+
+[中文简体]({{<relref path="/" outputFormat="rss" lang="zh-cn">}})
+
 ### xmpp
 
 我的xmpp联系方式是

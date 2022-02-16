@@ -24,6 +24,16 @@ Hi!
 
 * Smoking 🚭
 
+## rss links
+
+Note: Posts under **different** languages are **different**, subscribe all to get full content.
+
+[English]({{<relref path="/" outputFormat="rss">}})
+
+[中文正體]({{<relref path="/" outputFormat="rss" lang="zh-tw">}})
+
+[中文简体]({{<relref path="/" outputFormat="rss" lang="zh-cn">}})
+
 ## xmpp
 
 My xmpp Address is:
