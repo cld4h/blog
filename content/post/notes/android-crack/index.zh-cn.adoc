@@ -1,0 +1,727 @@
+---
+title: Android crack
+date: 2019-06-18
+draft: false
+image: smali.png
+---
+//comment out to block unnecessary infos.
+//cld4h <cld4h@disroot.org>
+//v2.2, 2019-06-18
+//:toclevels: 4
+//:icons: font
+
+//说明：本文为移动终端安全课程期末作业实验报告
+
+ifdef::backend-html5[]
+:twoinches: width='144'
+:full-width: width='100%'
+:half-width: width='50%'
+:half-size:
+:75-size: width='75%'
+:thumbnail: width='60'
+:source-highlighter: prettify
+endif::[]
+ifdef::backend-pdf[]
+:twoinches: pdfwidth='2in'
+:full-width: pdfwidth='100vw'
+:half-width: pdfwidth='50vw'
+:half-size: pdfwidth='50%'
+:75-size: pdfwidth='75%'
+:thumbnail: pdfwidth='40mm'
+:source-highlighter: coderay
+endif::[]
+ifdef::backend-docbook5[]
+:twoinches: width='50mm'
+:full-width: scaledwidth='100%'
+:half-width: scaledwidth='50%'
+:half-size: width='50%'
+:75-size: scaledwidth='75%'
+:thumbnail: width='20mm'
+:source-highlighter: coderay
+endif::[]
+
+== 目标
+//对以下目标软件进行破解，编写破解报告，并提交破解后软件或注册机：
+//（1）软件破解
+//使用ApkTool及Dex2jar逆向crackme2.apk，寻找到爆破点，修改注册逻辑代码，使注册机制失效，使用ApkTool重新打包生成apk，要求新的apk对任意字符成功注册。（可使用工具：ApkTool、BakSmali 、dex2jar、jd-gui）。
+//（2）注册机开发
+//逆向示例程序crackme.apk，根据dex2jar和JD-GUI工具，查看java源码，分析注册机制，写出注册机程序。
+
+. 软件破解
+
+使用 `apktool` 及 `dex2jar` 逆向 `crackme2.apk` ，寻找到爆破点，修改注册逻辑代码，使注册机制失效，使用 `apkTool` 重新打包生成apk，要求新的apk对任意字符成功注册。（可使用工具： `apktool` 、 `BakSmali`  、 `dex2jar` 、 `jd-gui` ）。
+
+[start=2]
+. 注册机开发
+
+逆向示例程序 `crackme.apk` ，根据 `dex2jar` 和 `JD-GUI` 工具，查看java源码，分析注册机制，写出注册机程序。
+
+== 环境说明
+
+|===
+
+|工具|版本
+
+|apktool
+|v2.4.0 with smali v2.2.6 and baksmali v2.2.6
+
+|OpenJDK
+|1.8.0_212
+
+|dex2jar
+|2.0
+
+|jd-gui
+|1.5.2
+
+|Android Studio
+|Android Studio 3.4.1
+
+Build #AI-183.6156.11.34.5522156, built on May 2, 2019
+
+JRE: 1.8.0_152-release-1343-b16-5323222 amd64
+
+JVM: OpenJDK 64-Bit Server VM by JetBrains s.r.o
+
+Linux 5.1.8-arch1-1-ARCH
+
+|AVD 虚拟机
+|Nexus 5X API 28 x86
+
+|ADB
+|Android Debug Bridge version 1.0.41
+Version 28.0.3-5475833
+|===
+
+== 软件破解
+
+=== 反编译过程说明
+
+使用 `apktool` 进行反编译，执行：
+
+  apktool d crackme2.apk
+
+得到 `crackme2` 目录，查看其中文件及目录结构：
+
+  cd crackme2
+  tree . > t.txt
+
+输出的 `t.txt` 中内容如下：
+
+.t.txt
+----
+.
+├── AndroidManifest.xml
+├── apktool.yml
+├── original
+│   ├── AndroidManifest.xml
+│   └── META-INF
+│       ├── CERT.RSA
+│       ├── CERT.SF
+│       └── MANIFEST.MF
+├── res
+│   ├── drawable-hdpi-v4
+│   │   └── icon.png
+│   ├── drawable-ldpi-v4
+│   │   └── icon.png
+│   ├── drawable-mdpi-v4
+│   │   └── icon.png
+│   ├── layout
+│   │   └── main.xml
+│   └── values
+│       ├── ids.xml
+│       ├── public.xml
+│       └── strings.xml
+├── smali
+│   └── com
+│       └── lohan
+│           └── crackme0a
+│               ├── Main.smali
+│               ├── R$attr.smali
+│               ├── R$drawable.smali
+│               ├── R$id.smali
+│               ├── R$layout.smali
+│               ├── R$string.smali
+│               └── R.smali
+└── t.txt
+
+12 directories, 21 files
+
+----
+
+当使用 `apktool` 工具反编译 apk 文件后，会在反编译工程目录下生成一个 `smali` 目录，其中保存了所有反编译出的 `smali` 文件，这些文件的功能是根据程序包的层次结构生成相应的目录。在 Android 应用程序中，在程序编译前的所有 Java 类都会在编译后的相应目录下生成独立的 `smali` 文件，无论是普通类、抽象类、接口类或者内部类，在反编译后的代码中都以独立的 `.smali` 格式文件存放。每个 `.smali` 格式文件都由若干代码语句组成，所有的代码语句都遵循了严格的语法规范。
+
+=== smali文件格式信息说明
+
+通常来说， `.smali` 格式文件的前3行代码描述了当前类的一些信息，具体格式如下所示：
+
+  .class <访问权限> [修饰关键字] <类名>
+  .super <父类名>
+  .source <源文件名>
+
+例如在 `Main.smali` 文件中，前三行为
+
+  .class public Lcom/lohan/crackme0a/Main;
+  .super Landroid/app/Activity;
+  .source "Main.java"
+
+第一行代码中的 `.class` 指令指定了当前类的类名。类名开头的字符“L”遵循了 Dalvik VM 字节码的约定规则，表示后面跟随的字符串为一个类
+
+第二行代码中的 `.super` 指令设置了当前的父类，本实例 `Lcom/lohan/crackme0a/Main` 的父类是 `Landroid/app/Activity`
+
+第三行代码中的 `.source` 指令设置了当前类的源文件名。
+
+前三行代码后的代码部分就是整个类的主题部分，一个Android程序类可以由多个字段或方法组成。在 `smali` 文件中，使用 `.field` 指令来声明字段。这里字段有静态字段和实例字段两种。具体说明如下所示。
+
+静态字段的声明格式如下：
+
+  # static fields
+  .field <访问权限> static [修饰关键字] <字段名>:<字段类型>
+
+当 `baksmali` 生成 `smali` 文件时，会在静态字段声明的起始处添加 `static fields` 注释。我们可以发现，在 `smali` 文件中的注释与 Dalvik VM 中的语法一样，都是以“#”开头。在 `.field` 指令后会紧跟着“访问权限”指令，这里的访问权限可以是 `public` 、 `private` 、 `protected` 。“修饰关键字”描述了字段的其他属性，例如 `synthetic` 。指令的最后是 “字段名”和“字段类型”，使用冒号进行分隔，语法与 Dalvik VM 一样。
+
+实例字段的声明与静态字段类似，只是少了 `static` 关键字， 其具体格式如下：
+
+  # instance fields
+  .field <访问权限> [修饰关键字] <字段名>:<字段类型>
+
+直接方法的声明格式如下所示：
+
+  # direct methods
+  .method <访问权限> [修饰关键字] <方法原型>
+    <.locals>
+  [.parameter]
+  [.prologue]
+  [.line]
+  <代码体>
+  .end method
+
+. `direct methods` 是 `baksmali` 添加的注释，访问权限和修饰关键字与字段的描述相同，方法原型描述了方法的名称、参数与返回值
+
+. `.locals` 指定了使用的局部变量的个数。
+
+. `.parameter` 指定了方法的参数，与Dalvik VM语法中使用的 `.parameters` 指定的参数个数不同，每个 `.parameter` 指令表明使用一个参数，假如在方法中使用了3个参数，那么就会出现3条 `.parameter` 指令。
+
+. `.prologue` 指定了代码的开始处，混淆过的代码可能去除了该指令。
+
+. `.line` 指定了该处指令在源代码中的行号，同理，混淆过的代码可能去除了行号信息。
+
+声明虚方法的格式与声明直接方法的相同，只是起始处的注释为 `virtual methods` 而已。如果某一个类实现了接口，则会在 `smali` 文件中使用 `.implements` 指令来声明，具体声明格式如下所示
+
+  # interfaces
+  . implements <接口名>
+
+`.implements` 是接口关键字，其后的接口名是 `DexClassDef` 结构中 `interfacesOff` 字段指定的内容。
+当一个类使用了注解时，会在 `smali` 文件中使用 `.annotation` 指令进行声明，声明注解的语法格式如下所示：
+
+  # annotations
+  .annotation [注解属性] <注解类名>
+  	[注解字段 = 值]
+  .end annotation
+
+在 Android 程序中，注解的作用范围可以是类、方法或字段。如果注解作用范围是类，则 `.annotation` 指令会直接在 `smali` 文件中定义。如果是方法或字段，则会在方法或字段定义中包含 `.annotation` 指令。
+
+[TIP]
+更多 `smali` 相关知识，可参阅 Gabor Paller 所写的《Dalvik opcodes》一文。 http://pallergabor.uw.hu/androidblog/dalvik_opcodes.html[链接]
+
+=== 修改破解过程说明
+
+回到我们的 `crackme2.apk` 实例，直接分析 `smali` 指令不太方便，我们先通过 `dex2jar` 工具反编译出源码，方便理解程序运行的逻辑。
+
+先解压apk
+
+  unzip crackme2.apk
+
+在解压出的文件中找到 `classes.dex` 文件，进行反编译。
+
+  d2j-dex2jar.sh classes.dex
+
+生成 `classes-dex2jar.jar` 文件，用 `jd-gui` 工具打开后可以看到 `com.lohan.crackme0a` 包。打开 `Main.class` ，可看到其中的 `onClick()` 函数
+
+.onClick()函数
+image::./src.png[onClick函数]
+
+破解的方法一目了然：只要我们不让程序进入到图中 `if` 分支内部即可。
+
+破解的关键在于 `if-nez` 指令。
+
+打开 `smali/com/lohan/crackme0a/Main.smali` 文件，搜索 `if-nez` 指令
+
+.Main.smali 代码
+image::./smali.png[Main.smali代码]
+
+将光标选中高亮的代码行改成 `goto :cond_0` ，这样整个破解代码工作就完成了。
+
+当修改完 `smali` 文件的代码后，接下来就可以将修改后的文件重新编译并打包成apk文件。编译apk文件的命令格式为：
+
+  apktool b[uild] [options] [<app_path>] -o [<out_file>]
+
+执行：
+
+  apktool b crackme2/ -o crackme2-unsigned.apk
+
+因为现在编译生成的 `crackme2-unsigned.apk` 格式还没有签名，所以不能进行安装并测试，接下来需要对 apk 文件进行签名。
+
+签名的方法有很多种。
+
+可以通过 `signapk.jar` 进行签名。 `signapk.jar` 工具是Android源码目录下的 `build/tools/signapk/Signapk.java` 文件中实现的，源码编译后可以在 `out/host/linux-x86/framework` 目录中找到。使用 `signapk.jar` 签名时需要提供签名文件，可以使用 Android 源码中提供的签名文件 `testkey .pk8` 和 `testkey.x509.pem` 这两个文件位于Android源码的 `build/target/product/security` 目录中。
+
+也可以通过 `jarsigner` 进行签名。
+可以使用 `keytool` 生成自签名证书，命令如下：
+
+  keytool -genkey -alias android.keystore -keyalg RSA -validity 20000 -keystore android.keystore
+
+然后使用 `jarsigner` 对 apk 进行签名，命令
+
+  jarsigner -verbose -keystore android.keystore -signedjar crackme2-selfsigned.apk crackme2-unsigned.apk android.keystore
+
+打开 Android Studio 中的AVD Manager， 启动Android虚拟机。
+通过 `adb devices` 确认设备可用，通过 `adb install crackme2-selfsigned.apk` 安装
+
+打开app，验证破解成功。
+
+.输入任意字符串
+image::./yz-1.png[输入任意字符串,{half-size},align="center"]
+
+.验证成功
+image::./yz-2.png[验证成功,{half-size},align="center"]
+
+== 注册机开发
+
+//逆向示例程序crackme.apk，根据dex2jar和JD-GUI工具，查看java源码，分析注册机制，写出注册机程序。
+
+=== 软件破解
+
+类似之前的步骤，通过 `unzip` 得到 dex 文件后通过 `dex2jar` 工具得到 jar 包，在 `jd-gui` 中查看反编译得到的源码。
+
+通过搜索特定的字符串找到关键函数。比如，我通过搜索 `Registerd successfully\nPlease write Tutorial How Found key?!` 字符串找到了函数 `_check_code()` ，只有当 `_check_code()` 返回真时才会有注册成功的消息提示。
+
+通过 `apktool` 工具将 `crackme.apk` 反编译，打开 `crackme/smali/Com/zAWS/KeygenMe/main.smali` ，搜索 `_check_code()` ，（1680行）。
+
+通过分析源码可以发现， `_check_code` 函数中有4处返回 `false` 最后一处返回 `true`
+
+image::./checkcode.png[_check_code()函数]
+
+对应 `main.smali` 文件中第1809、1828、1857、1870行的 `goto: goto_0` 指令。
+
+image::./goto-1.png[goto-1]
+image::./goto-2.png[goto-2]
+image::./goto-3.png[goto-3]
+image::./goto-4.png[goto-4]
+
+前三个在执行 `goto :goto_0` 之前均执行 `move v0, v5` ，把 `v5` 中的内容复制到 `v0` ；而最后一个在执行 `goto :goto_0` 之前执行的是 `move v0, v6` ，把 `v6` 中的内容复制到了 `v0`
+
+`goto_0` 处的指令仅仅是返回 `v0` 中的值。如图：
+
+image::./goto0.png[goto0]
+
+所以我判断前三个 `goto` 指令对应于 `return false` ，最后的 `goto` 指令对应于 `return true`
+
+查看 `v5` 和 `v6` 中的内容：
+
+image::./v5v6.png[v5v6]
+
+根据上面的分析，我们有充分的理由认为将 `v5` 中的内容改为 `0x1` 后， `_check_code` 函数将永远返回 `true` ，进而达到注册成功的效果。
+
+通前面一样，作了更改后通过
+
+  apktool b crackme/ -o crackme-unsigned.apk
+
+重新编译，再通过
+
+  jarsigner -verbose -keystore android.keystore -signedjar crackme-selfsigned.apk crackme-unsigned.apk android.keystore
+
+进行自签名。通过
+
+  adb install crackme-selfsigned.apk
+
+安装后运行验证
+
+.破解成功
+image::./crackme-selfsigned.png[破解成功,{half-size},align="center"]
+
+=== 注册机开发
+
+注册机开发实质上就是将前面提到的 `_check_code()` 函数的机理分析清楚。
+
+错误的注册码会进入使程序在 `_check_code()` 时进入前4个 `if` 语句，折戟沉沙；我们要想办法是程序跳过前四个 `if` 语句。
+
+下面我将从头至尾详细分析代码内容，分析的过程也是我思考和实验的过程。
+
+==== `_readfile()` 函数
+
+单看可能一头雾水，但联系后面的 `_decrypt()` 函数——由于 `_readfile()` 的结果传给了 `_decrypt()` 进行解密，我们猜其中应该是密文。
+
+.main.java
+[source,java]
+----
+public static String _readfile() throws Exception {
+	File file = Common.File;
+	String str = (file = Common.File).getDirInternal();
+	main main1 = mostCurrent;
+	if (File.Exists(str, _file_name)) {// <1>
+		File.TextReaderWrapper textReaderWrapper = new File.TextReaderWrapper();
+		File file1 = Common.File;
+		String str1 = (file1 = Common.File).getDirInternal();
+		main main2 = mostCurrent;
+		textReaderWrapper.Initialize((InputStream)File.OpenInput(str1, _file_name).getObject());// <2>
+		str1 = textReaderWrapper.ReadLine();
+		textReaderWrapper.Close();
+		return str1;// <3>
+	}
+    return "";
+}
+----
+<1> 读取 `_file_name` 文件
+<2> 打开 `_file_name` 文件
+<3> 以字符串的形式返回文件内容。
+
+我们搜索 `_file_name` ，发现其被赋值为 `key.txt` ，后续步骤中我们会通过 `adb shell` 来查看其中的内容。
+
+==== `_decrypt()` 函数和 `_encrypt()` 函数
+
+`_decrypt()` 函数，顾名思义是进行解密操作，解密的前提是加密，所以我们这里把加解密对照着看。由于反编译出的代码依赖于 `B2A` 库，这里我放入我修改后的代码。
+
+先看加密函数：
+
+.main.java
+[source,java]
+----
+public static String _encrypt(String paramString1, String paramString2) throws Exception{
+        byte[] arrayOfByte2 = _bconv.HexToBytes(_made_key());
+        byte[] arrayOfByte1 = _bconv.StringToBytes(paramString1 + "zAWS!", "UTF8");
+        CipherWrapper.KeyGeneratorWrapper keyGeneratorWrapper = new CipherWrapper.KeyGeneratorWrapper();
+        CipherWrapper cipherWrapper = new CipherWrapper();
+        cipherWrapper.Initialize("DES/ECB/NoPadding");
+        keyGeneratorWrapper.Initialize("DES");
+        keyGeneratorWrapper.KeyFromBytes(arrayOfByte2);
+        arrayOfByte1 = cipherWrapper.Encrypt(arrayOfByte1, keyGeneratorWrapper.getKey(), false);
+        return bytesToHex(arrayOfByte1);// <1>
+}
+----
+<1> 与反编译的代码不同，原始程序中此处是将解密结果写入 `key.txt` 文件，返回空串；在我的注册机中就没必要这么做了。
+
+浏览代码可知加密操作使用了ECB模式的DES加密方案，这个方案的实现是需要第三方库的。
+
+在 `anywheresoftware.b4a.agraham.encryption` 包中可以找到其中 `CipherWrapper` 类的实现。
+
+简便起见，我们可以将这个类整个复制一份到我们的注册机项目中。具体过程很简单，注意修改包名及删除annotation即可。此处不再展示修改过后的内容。
+
+下面来看 `_decrypt()` 函数
+
+.main.java
+[source,java]
+----
+public static String _decrypt(String paramString) throws Exception {
+        byte[] arrayOfByte2 = HexToBytes(_made_key());
+        byte[] arrayOfByte1 = HexToBytes(paramString);
+        CipherWrapper.KeyGeneratorWrapper keyGeneratorWrapper = new CipherWrapper.KeyGeneratorWrapper();
+        CipherWrapper cipherWrapper = new CipherWrapper();
+        cipherWrapper.Initialize("DES/ECB/NoPadding");
+        keyGeneratorWrapper.Initialize("DES");
+        keyGeneratorWrapper.KeyFromBytes(arrayOfByte2);
+        arrayOfByte1 = cipherWrapper.Decrypt(arrayOfByte1, keyGeneratorWrapper.getKey(), false);
+        return _bconv.StringFromBytes(arrayOfByte1, "UTF8").substring(0, 11);// <1>
+}
+----
+<1> 返回值是长度为11的字符串
+
+[TIP]
+正确解密后的结果应该是我们输入 `Activate` 对话框的11位数（再经过一个简单重排列）
+
+比较加密，解密过程，发现两者均需要调用 `_made_key()` 函数，因而我们需要分析 `_made_key()` 函数
+
+==== `_made_key()` 函数
+
+.反编译结果
+[source,java]
+----
+public static String _made_key() throws Exception {
+    main main1 = mostCurrent;
+    String str1 = _imei.substring(0, 2);
+    main main2 = mostCurrent;
+    String str2 = _imei;
+    main main3 = mostCurrent;
+    int i = _imei.length();
+    main3 = mostCurrent;
+    str2 = str2.substring(i - 2, _imei.length());
+    StringBuilder stringBuilder = (new StringBuilder()).append(str1);
+    main3 = mostCurrent;
+    return stringBuilder.append(_mac_address).append(str2).toString();
+  }
+----
+
+.修改后的代码
+[source,java]
+----
+public static String _made_key() {
+        String str1 = IMEI_String.substring(0, 2);
+        String str2 = IMEI_String;
+        int i = IMEI_String.length();
+        str2 = str2.substring(i - 2, IMEI_String.length());
+        StringBuilder stringBuilder = (new StringBuilder()).append(str1);
+        return stringBuilder.append(MAC_String).append(str2).toString();
+}
+----
+
+讲到这里，需要介绍一下我引入的两个全局变量：
+
+[source,java]
+----
+public static String IMEI_String;
+public static String MAC_String;
+----
+
+顾名思义是IMEI标识和MAC地址，均为 `String` 类型。两个重要参数的取值过程在下面会详细介绍。
+除此之外，我还删去了莫名其妙的 `mostCurrent` 赋值语句。
+
+分析和修改至此，我们需要暂且放慢脚步，验证一下我们所做的推断和所修改的代码都是正确的。下面我将以验证 `_made_key()` 函数的正确性为例，介绍我所用的调试方法。
+
+==== 验证工作：打印字符串
+
+前文提到， `_encrypt()` 函数将计算结果写入了 `key.txt` 文件。回想到老师上课所讲，Android 应用安装后资源文件、运行时所需的 lib库、启动加载的配置文件的存放路径是 `/data/data/<包名>` 我们不禁思索：能不能通过 `adb shell` 查看 `key.txt` 中的内容呢？
+
+打开 Android Studio 的 AVD Manager，启动虚拟机。
+
+在终端输入
+
+  adb root
+
+以root权限启动adb shell，输入
+
+  adb shell
+
+进入模拟器手机终端。
+
+切换目录到 `/data/data/Com.zAWS.KeygenMe`
+
+`ls` 列出目录名发现有 `files` 文件夹
+
+进入后看到 `key.txt` ，通过
+
+  cat key.txt
+
+查看其中内容。
+
+.查看key.txt文件(图是后截的，图中的内容其实就是我这台手机成功注册的key)
+image::./key.png[key.txt文件,align="center"]
+
+
+[TIP]
+能不能利用同样的机制打印出我们想查看的字符串呢？
+
+查看 `main.smali` 文件，找到 `_encrypt()` 函数，其中调用 `_write2file()` 函数的语句如下：
+
+  invoke-static {v0}, LCom/zAWS/KeygenMe/main;->_write2file(Ljava/lang/String;)Ljava/lang/String;
+
+该函数只接收一个参数（上面的 `v0` ），该参数指定要打印的字符串。
+
+然而，如果我们仅仅利用上面一条语句是不够的。因为 `_write2file()` 函数默认写入 `_file_name` 文件。而 `_file_name` 的值一直是 `key.txt` 。
+
+因此我们需要更改 `_file_name` 的值。具体方法也是找到 `main.smali` 中的对应的语句分析其各参数和条用过程。最终得到了一个行之有效的方法：
+
+.main.smali
+[source,smali]
+----
+    #output _made_key -------------------------
+
+    const-string v6, "made_key.txt"
+
+    sput-object v6, LCom/zAWS/KeygenMe/main;->_file_name:Ljava/lang/String;
+
+    invoke-static {v1}, LCom/zAWS/KeygenMe/main;->_write2file(Ljava/lang/String;)Ljava/lang/String;
+
+    const-string v6, "key.txt"
+
+    sput-object v6, LCom/zAWS/KeygenMe/main;->_file_name:Ljava/lang/String;
+
+    #output _made_key -------------------------
+----
+
+前两条命令将 `_file_name` 改为 `made_key.txt` ，调用 `_write2file()` 后再将 `_file_name` 改回 `key.txt` 。
+
+注意，其中的 `v6` 寄存器是我新增加的寄存器，所以需要将 `.locals` 命令后参数加1。
+
+将上述代码添加到
+
+  invoke-static {}, LCom/zAWS/KeygenMe/main;->_made_key()Ljava/lang/String;
+  move-result-object v1
+
+之后即可打印 `v1` 中的内容，查看 `_made_key()` 调用结果。
+
+按照上述方法修改过main.smali后通过和前面软件破解一致的“重新打包、签名、安装”三步，即可运行软件查看 `_made_key()` 调用结果。
+
+.查看 `_made_key()` 调用结果
+image::./made_key.png[made_key结果,align="center"]
+
+以上过程所叙述的调试方法就是我这次逆向过程的“瑞士军刀”，是保证我重新实现的函数与原程序中完全一致的关键所在。
+
+==== IMEI和MAC的获取
+
+在原程序中，IMEI通过
+
+  _imei = (phoneId = mostCurrent._myphone).GetDeviceId();
+
+获取；MAC通过
+
+  _mac_address = (mostCurrent._mywifi.ABGetCurrentWifiInfo()).MacAddress;
+
+获取。
+
+事实上，我们用户都熟知，可以通过拨号盘输入“*\#06#”获取IMEI，可以通过查看WiFi信息来获取MAC码。
+
+.获取IMEI，结果为358240051111110
+image::./imei.png[获取IMEI，结果为358240051111110,{thumbnail},align=center]
+
+.获取MAC，结果为0215b2000000
+image::./mac.png[获取MAC，结果为0215b2000000,{thumbnail},align=center]
+
+在我一开始的设计中，由用户手动将IMEI和MAC写入注册机，点击“Compute” 按钮后计算出结果显示在“RegCode”一栏。
+
+后面为了更自动化，我在程序中加入自动获取IMEI和MAC码的功能。
+
+===== 小插曲：
+
+在调试过程中，我发现原程序获得的MAC地址与模拟器实际显示的不一致
+
+.查看原程序获取到的MAC地址
+image::./check-mac.png[查看原程序获取到的MAC地址,align=center]
+
+程序获得的MAC地址是 `02:00:00:00:00:00` 实际是 `02:15:b2:00:00:00`
+
+简而言之，原因是我的模拟器版本高于Android 6.0（M）由于Android 6.0 之后对于用户隐私的保护，将不再能通过 `WifiManager` 获取MAC，获取到的MAC将是固定的： `02:00:00:00:00:00` 。
+
+详细分析原程序获取MAC的过程可以看到它正是通过 `WifiManager` 获取的MAC地址。
+
+.ABWifi.java中的ABLoadWifi函数
+[source,java]
+----
+WifiInfo wifiInfo = this.wifi.getConnectionInfo();// <1>
+    String str1 = str2;
+    if (wifiInfo != null) {
+      this._CurrentWifiInfo.BSSID = wifiInfo.getBSSID();
+      this._CurrentWifiInfo.MacAddress = wifiInfo.getMacAddress();// <2>
+      this._CurrentWifiInfo.FullString = wifiInfo.toString();
+//...
+----
+<1> `wifi` 是 `WifiManager` 对象
+<2> 通过 `WifiInfo` 的 `getMacAddress()` 获取到MAC地址
+
+但这其实也简化了我编程的难度。我也只需要通过 `WifiManager` 获取MAC即可，不用考虑更高版本的适配了。
+
+IMEI的获取方式较为类似，是通过 `TelephonyManager` 的 `getimei()` 或 `getDeviceId()` 函数得到的。 `getDeviceId()` 在Android 8.0 （O）及以上就被标明弃用了，改用 `getimei()` 函数，不过在模拟器中，原程序能够获得正确的IMEI。
+
+.查看原程序获取到的IMEI地址
+image::./check-imei.png[查看原程序获取到的IMEI地址,{75-size},align=center]
+
+==== `_calculate_codes()` ， `_fix_imei()` 及 `_get_correct_code()` 函数
+
+在 `_check_code()` 函数中，出去前面分析过的 `_decrypt()` 函数外，就是 `_calculate_codes()` ， `_fix_imei()` 及 `_get_correct_code()` 函数构成了主要部分。分析过程与前文中 `_made_key()` 函数的分析相同：先通过反编译的Java代码重新实现一遍对应的函数，再在原程序和注册机程序中输入相同的内容进行检验，原程序通过在smali代码中添加调试输出语句在 `adb shell` 中进行字符串的查看，注册机输出到 `RegCode` 右边的TextView中（当时截图时是TextView，现在我已经把这个改成了EditText方便复制，不过这些都是小细节了）,若输出一致，基本上可以判断重新实现的函数是正确的。
+
+下面进行具体分析：
+
+===== `_decrypt()` 和 `_encrypt()` 函数的分析检验。
+
+.`_encrypt()` 函数，注册机检验输出的语句，输入为11个1
+image::./check-key-2.png[{75-size},align=center]
+
+.`_encrypt()` 函数输出对比
+image::./check-key.png[{half-width},align=center]
+
+输出的内容是一致的。
+
+.`_decrypt()` 函数，注册机检验输出的语句，先加密在解密，加密输入为11个1
+image::./check-decrypt-2.png[{75-size},align=center]
+
+.`_decrypt()` 函数输出
+image::./check-decrypt.png[{half-width},align=center]
+
+成功将输入的字符串（11个1）解密
+
+===== `_calculate_codes()` 和 `_fix_imei()` 的检验
+
+（说一个细节：反编译出的代码中“calculate”一词拼写错误，我后续做了修改）
+
+.`_calculate_codes(_fix_imei(true))` 的结果（即 `str1` ）注册机检验输出的语句
+image::./check-str1-2.png[{75-size},align=center]
+
+注意到我截图时加上了前面的 `_array_p1` 初始化赋值语句，这很重要，否则计算失败。
+
+.`_calculate_codes(_fix_imei(true))` 的结果（即 `str1` ）输出结果对比
+image::./check-str1.png[{half-width},align=center]
+
+.`_calculate_codes(_fix_imei(false))` 的结果（即 `str2` ）注册机检验输出的语句
+image::./check-str2-2.png[{75-size},align=center]
+
+.`_calculate_codes(_fix_imei(false))` 的结果（即 `str2` ）输出结果对比
+image::./check-str2.png[{half-width},align=center]
+
+.key_from_imei_number检验
+image::./check-key_from_imei_number-2.png[{75-width},align=center]
+
+这个字符串容易被忽略，我在下面用 `s_imei` 表示 `_key_from_imei_number` 转成的字符串。
+
+.key_from_imei_number检验
+image::./check-key_from_imei_number.png[{half-width},align=center]
+
+
+===== `_get_correct_code()` 函数分析
+
+[source,java]
+----
+public static String _get_correct_code(String paramString){
+        String str1 = paramString.substring(0, 5);//0,1,2,3,4
+        String str2 = paramString.substring(paramString.length() - 5);//6,7,8,9,10
+        paramString = paramString.substring(5, 6);//5
+        return paramString + str2 + str1;//5,6,7,8,9,10,0,1,2,3,4
+}
+----
+
+这个函数非常简单，一目了然，就是将输入的字符串（ `str3` ,长度是11）从第六个字符（下标是5）开始一直到最后一个字符形成的子串拿到前面来，即：按照下标为5,6,7,8,9,10,0,1,2,3,4的顺序重新排列。
+
+==== 收尾工作
+
+分析至此，我们的工作已经基本成功了。
+
+在 `_check_code` 中的三个if条件告诉了我们如何组合几个字符串能满足成功注册的条件
+
+._check_code() 函数
+[source,java]
+----
+if (!str3.substring(0, 1).equalsIgnoreCase(stringBuilderWrapper.Append(BA.NumberToString(_key_from_imei_number)).ToString().valueOf(stringBuilderWrapper)))
+	return false;
+if (!str3.substring(1, 6).equalsIgnoreCase(str1))
+	return false;
+if (!str3.substring(str3.length() - 5, str3.length()).equalsIgnoreCase(str2))
+	return false;
+----
+
+.最终我的注册机核心代码
+[source,java]
+----
+String str1,str2,str3,s_imei;
+str1 = _calculate_codes(_fix_imei(true));
+str2 = _calculate_codes(_fix_imei(false));
+s_imei = NumberToString(_key_from_imei_number);
+str3 = s_imei+str1+str2;
+str3 = _recombine_code(str3);
+TW_RegCodeText.setText(str3);
+----
+
+其中 `str3` 用以表示结果（即用户应输入的11位数字的注册码），其它的各变量和函数的含义在上面均以详细讲述过了。
+
+最后的效果是成功注册，小黄锁打开了。图我就不上了，因为和前面软件破解后的效果一样。
+
+但我录了一个小视频， `success.gif`
+
+ifdef::backend-html5[]
+image::./success.gif[success.gif]
+endif::[]
+
+== 文件夹内容说明
+
+. `crackme2-selfsigned.apk` 文件是第一题软件破解后自签名程序
+. `Reg.apk` 文件是第二题的注册机程序
+. `pic` 目录中包含本文中的所有图片
+. `success.gif` 文件是注册机使用效果录屏
+. `Reg` 目录下是注册机项目源码
