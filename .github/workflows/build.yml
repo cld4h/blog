@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: 'Building...'
-      uses: reuixiy/hugo-deploy@v1
+      uses: cld4h/hugo-deploy-with-asciidoctor@v1.1
       env:
         DEPLOY_REPO: cld4h/cld4h.github.io
         DEPLOY_BRANCH: build
