@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 'Building...'
-      uses: cld4h/hugo-deploy-with-asciidoctor@v1.1
+    - name: hugo-deploy-with-asciidoctor
+      uses: cld4h/hugo-deploy@v1.1
       env:
         DEPLOY_REPO: cld4h/cld4h.github.io
         DEPLOY_BRANCH: build
