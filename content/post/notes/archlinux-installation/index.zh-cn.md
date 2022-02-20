@@ -1,7 +1,8 @@
 ---
-title: Archlinux installation
+title: Archlinux 安装
 date: 2019-09-24T15:31:24+0800
 lastmod: 2022-02-20T16:38:30+0800
+image: https://archlinux.org/static/logos/archlinux-logo-dark-scalable.518881f04ca9.svg
 draft: false
 ---
 
