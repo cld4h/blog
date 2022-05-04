@@ -16,6 +16,25 @@ We use:
 
 You can go to [github gist](https://gist.github.com/cld4h/9a03ec2f826a25be5ab974fdbc540de4) to download all files mentioned in this article.
 
+All files you need:
+
+```txt
+.
+├── clash-base-config.yaml  ---🟢base config for clash to work on tproxy and fake-ip mode
+├── clash.service           ---🟢systemd unit file to start up clash
+├── clean.sh                ---🟢script to clean iptables
+├── config.ini              ---🟢config file for subconverter
+├── iptables.sh             ---🟢iptables config file
+├── update-config.sh        ---🟡subscription update script; "XXXXXXXX" need to be replaced
+├── config.yaml             ---⭕clash config file, to be generated from update-config.sh
+├── README.md
+└── README.zh-cn.md
+
+🟢: Doesn't need to change
+🟡: Needs to change
+⭕: Needs to be generated
+```
+
 ## Reference
 
 [clash-tproxy](https://www.sobyte.net/post/2022-02/clash-tproxy/)

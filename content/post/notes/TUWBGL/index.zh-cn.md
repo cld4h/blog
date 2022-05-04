@@ -16,6 +16,25 @@ draft: false
 
 你可以从 [github gist](https://gist.github.com/cld4h/9a03ec2f826a25be5ab974fdbc540de4) 来下载本文中提到的文件。
 
+配置所需的全部文件：
+
+```txt
+.
+├── clash-base-config.yaml  ---🟢clash的基础配置以使其工作在tproxy和fake-ip模式
+├── clash.service           ---🟢systemd 配置文件
+├── clean.sh                ---🟢清理iptables的脚本
+├── config.ini              ---🟢subconverter的配置文件
+├── iptables.sh             ---🟢iptables配置文件
+├── update-config.sh        ---🟡订阅更新脚本; 须将"XXXXXXXX"替换成你的订阅地址
+├── config.yaml             ---⭕clash 配置文件, 须从update-config.sh生成
+├── README.md
+└── README.zh-cn.md
+
+🟢: 无需修改
+🟡: 需要修改
+⭕: 需要生成
+```
+
 ## 参考
 
 [clash-tproxy](https://www.sobyte.net/post/2022-02/clash-tproxy/)
