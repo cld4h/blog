@@ -2,7 +2,7 @@
 title: "论皇帝"
 date: 2022-06-01T15:08:51+0800
 draft: false
-image: image/wxt.webp
+image: wxt.webp
 tags: ["转载"]
 ---
 

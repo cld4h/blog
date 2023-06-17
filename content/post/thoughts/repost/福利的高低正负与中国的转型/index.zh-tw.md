@@ -1,8 +1,8 @@
 ---
-title: 福利的「高低」「正負」與中國的轉型
+title: "福利的「高低」「正負」與中國的轉型"
 date: 2022-03-04T08:26:31+0800
-image: image/qinhui.jpg
 tags: ["轉載"]
+image: qinhui.jpg
 draft: false
 ---
 

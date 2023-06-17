@@ -2,7 +2,7 @@
 title: "中国的“颂圣”情结"
 date: 2022-03-16T09:49:07+08:00
 draft: false
-image: image/zzy.jpg
+image: zzy.jpg
 tags: ["转载"]
 ---
 
