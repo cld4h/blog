@@ -1,4 +1,4 @@
-baseurl: https://cld4h.github.io
+baseurl: https://cld4h.github.io/blog
 languageCode: en-us
 theme: hugo-theme-stack
 paginate: 5
@@ -191,7 +191,7 @@ menu:
     main:
         - identifier: home
           name: Home
-          url: /
+          url: /blog
           weight: -100
           params:
               ### For demonstration purpose, the home link will be open in a new tab
