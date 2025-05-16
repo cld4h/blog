@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Beamer on cld4h's blog</title><link>https://cld4h.github.io/blog/tags/beamer/</link><description>Recent content in Beamer on cld4h's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Mon, 21 Oct 2019 00:00:00 +0000</lastBuildDate><atom:link href="https://cld4h.github.io/blog/tags/beamer/index.xml" rel="self" type="application/rss+xml"/><item><title>LaTeX tips</title><link>https://cld4h.github.io/blog/p/latex-tips/</link><pubDate>Mon, 21 Oct 2019 00:00:00 +0000</pubDate><guid>https://cld4h.github.io/blog/p/latex-tips/</guid><description>&lt;h2 id="beamer">Beamer
+&lt;/h2>&lt;h3 id="在beamer中插入图片">在Beamer中插入图片
+&lt;/h3>&lt;p>(可参见Beamer文档12.6节)&lt;/p>
+&lt;p>figure 环境示例：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-tex" data-lang="tex">&lt;span class="line">&lt;span class="cl">&lt;span class="k">\begin&lt;/span>&lt;span class="nb">{&lt;/span>figure&lt;span class="nb">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">\centering&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">\includegraphics&lt;/span>&lt;span class="na">[width=\textwidth]&lt;/span>&lt;span class="nb">{&lt;/span>pic/F1.png&lt;span class="nb">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">\caption&lt;/span>&lt;span class="nb">{&lt;/span>图中每个方块代表交易，右下角的数字表示交易本身的权重，粗体字表示累积权重。&lt;span class="nb">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">\label&lt;/span>&lt;span class="nb">{&lt;/span>fig:bef&lt;span class="nb">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">\end&lt;/span>&lt;span class="nb">{&lt;/span>figure&lt;span class="nb">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>为了使图片的caption有数字标号，在导言区加入下述内容：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-tex" data-lang="tex">&lt;span class="line">&lt;span class="cl">&lt;span class="k">\setbeamertemplate&lt;/span>&lt;span class="nb">{&lt;/span>caption&lt;span class="nb">}&lt;/span>[numbered]
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="从markdown编译beamer-presentation">从markdown编译Beamer presentation
+&lt;/h3>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">pandoc talk.md -t beamer -o talk.pdf --pdf-engine=xelatex -V mainfont=思源宋体
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div></description></item></channel></rss>

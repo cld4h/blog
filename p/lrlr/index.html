@@ -1,0 +1,378 @@
+<!doctype html><html lang=en dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content="题目来源\n2019 字节跳动 bytectf crypto lrlr\n参考\nTeam: W&amp;M\nJarvis oj crypto\n先全文摘抄大佬的 Write Up 通过old的1000组可以预测python随机数， https://github.com/tna0y/Python-random-module-cracker\n一共2轮aes加密，既然密钥可以预测出来，自然就能解密得到clist。\n"><title>lrlr</title>
+<link rel=canonical href=https://cld4h.github.io/blog/p/lrlr/><link rel=stylesheet href=/blog/scss/style.min.0304c6baf04e01a8fe70693791cb744d56a3578a3120a8796cefc66825aa39c7.css><meta property='og:title' content="lrlr"><meta property='og:description' content="题目来源\n2019 字节跳动 bytectf crypto lrlr\n参考\nTeam: W&amp;M\nJarvis oj crypto\n先全文摘抄大佬的 Write Up 通过old的1000组可以预测python随机数， https://github.com/tna0y/Python-random-module-cracker\n一共2轮aes加密，既然密钥可以预测出来，自然就能解密得到clist。\n"><meta property='og:url' content='https://cld4h.github.io/blog/p/lrlr/'><meta property='og:site_name' content="cld4h's blog"><meta property='og:type' content='article'><meta property='article:section' content='Post'><meta property='article:tag' content='lrlr'><meta property='article:tag' content='bbencode'><meta property='article:published_time' content='2019-09-17T19:11:45+08:00'><meta property='article:modified_time' content='2019-09-17T19:11:45+08:00'><meta name=twitter:title content="lrlr"><meta name=twitter:description content="题目来源\n2019 字节跳动 bytectf crypto lrlr\n参考\nTeam: W&amp;M\nJarvis oj crypto\n先全文摘抄大佬的 Write Up 通过old的1000组可以预测python随机数， https://github.com/tna0y/Python-random-module-cracker\n一共2轮aes加密，既然密钥可以预测出来，自然就能解密得到clist。\n"></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label="Toggle Menu">
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/blog/><img src=/blog/img/avataaars_hu_25972a44ed8b91a1.png width=300 height=318 class=site-logo loading=lazy alt=Avatar>
+</a><span class=emoji>🏡</span></figure><div class=site-meta><h1 class=site-name><a href=/blog>cld4h's blog</a></h1><h2 class=site-description>Self sufficient!</h2></div></header><ol class=menu-social><li><a href=mailto:cld4h@disroot.org target=_blank title=email rel=me><svg class="icon icon-tabler icon-tabler-email" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5s16 0 16 0c1.19.0 2 .13 2 1.5V17.5C22 18.87 21.19 19 20 19H4C2.81 19 2 18.87 2 17.5V7c0-1.37.81-1.5 2-1.5z"/><path d="M2.5 6c2 2 4 4 5.58 5.25C9.67 12.5 10.83 13 12 13s2.33-.5 3.92-1.75C17.5 10 19.5 8 21.5 6"/><path d="M8.5 12c-2 1.67-4 3.33-6 5"/><path d="M15.5 12c2 1.67 4 3.33 6 5"/></svg></a></li><li><a href=https://github.com/cld4h target=_blank title=GitHub rel=me><svg class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li><li><a href=/blog/about/#rss-links target=_blank title=RSS rel=me><svg class="icon icon-tabler icon-tabler-rss" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="5" cy="19" r="1"/><path d="M4 4a16 16 0 0116 16"/><path d="M4 11a9 9 0 019 9"/></svg></a></li><li><a href=/blog/about/#xmpp target=_blank title=xmpp:cld4h@disroot.org rel=me><svg class="icon icon-tabler icon-tabler-messages" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M21 14l-3-3h-7a1 1 0 01-1-1V4a1 1 0 011-1h9a1 1 0 011 1v10"/><path d="M14 15v2a1 1 0 01-1 1H6l-3 3V11a1 1 0 011-1h2"/></svg></a></li></ol><ol class=menu id=main-menu><li><a href=/blog/blog target=_blank><svg class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="5 12 3 12 12 3 21 12 19 12"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/><path d="M9 21v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
+<span>Home</span></a></li><li><a href=/blog/archives/><svg class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><rect x="3" y="4" width="18" height="4" rx="2"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+<span>Archives</span></a></li><li><a href=/blog/search/><svg class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>
+<span>Search</span></a></li><li><a href=/blog/about/><svg class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+<span>About</span></a></li><li class=menu-bottom-section><ol class=menu><li id=i18n-switch><svg class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c-.003 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg>
+<select name=language title=language onchange="window.location.href=this.selectedOptions[0].value"><option value=https://cld4h.github.io/blog/ selected>English</option><option value=https://cld4h.github.io/blog/zh-tw/>中文正體</option><option value=https://cld4h.github.io/blog/zh-cn/>中文简体</option></select></li><li id=dark-mode-toggle><svg class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>Dark Mode</span></li></ol></li></ol></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><div class=article-title-wrapper><h2 class=article-title><a href=/blog/p/lrlr/>lrlr</a></h2></div><footer class=article-time><div><svg class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Sep 17, 2019</time></div><div><svg class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>4 minute read</time></div></footer></div></header><section class=article-content><p>题目来源</p><p><a class=link href=https://adworld.xctf.org.cn/media/uploads/task/207689abfdd54b5382ef06739ec1e318.zip target=_blank rel=noopener>2019 字节跳动 bytectf crypto lrlr</a></p><p>参考</p><p><a class=link href=https://xz.aliyun.com/t/6324#toc-25 target=_blank rel=noopener>Team: W&amp;M</a></p><p><a class=link href=https://196011564.github.io/2018/12/11/CTF-JarvisOJ-Crypto-[61dctf]bbencode/index.html target=_blank rel=noopener>Jarvis oj crypto</a></p><h2 id=先全文摘抄大佬的-write-up>先全文摘抄大佬的 Write Up</h2><p>通过old的1000组可以预测python随机数，
+<a class=link href=https://github.com/tna0y/Python-random-module-cracker target=_blank rel=noopener>https://github.com/tna0y/Python-random-module-cracker</a></p><p>一共2轮aes加密，既然密钥可以预测出来，自然就能解密得到clist。</p><p><img src=/blog/p/lrlr/lrlr.png width=1078 height=1350 srcset="/blog/p/lrlr/lrlr_hu_eb000d64b62d1d35.png 480w, /blog/p/lrlr/lrlr_hu_b2efec2eedc82ef2.png 1024w" loading=lazy alt=lrlr.png class=gallery-image data-flex-grow=79 data-flex-basis=191px></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-py data-lang=py><span class=line><span class=cl><span class=kn>from</span> <span class=nn>Crypto.Util.number</span> <span class=kn>import</span> <span class=n>getPrime</span><span class=p>,</span> <span class=n>bytes_to_long</span><span class=p>,</span> <span class=n>long_to_bytes</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>Crypto.Cipher</span> <span class=kn>import</span> <span class=n>AES</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>random</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>randcrack</span> <span class=kn>import</span> <span class=n>RandCrack</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>rc</span> <span class=o>=</span> <span class=n>RandCrack</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=k>with</span> <span class=nb>open</span><span class=p>(</span><span class=s1>&#39;old&#39;</span><span class=p>)</span> <span class=k>as</span> <span class=n>file</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=n>old</span> <span class=o>=</span> <span class=p>[</span><span class=nb>int</span><span class=p>(</span><span class=n>i</span><span class=p>)</span> <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=n>file</span><span class=o>.</span><span class=n>read</span><span class=p>()</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=o>.</span><span class=n>split</span><span class=p>(</span><span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>index</span> <span class=o>=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=n>index</span><span class=p>,</span><span class=mi>624</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>rc</span><span class=o>.</span><span class=n>submit</span><span class=p>(</span><span class=n>old</span><span class=p>[</span><span class=n>index</span><span class=p>])</span>
+</span></span><span class=line><span class=cl>    <span class=n>index</span><span class=o>+=</span><span class=mi>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>1000</span><span class=o>-</span><span class=mi>624</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>assert</span><span class=p>(</span><span class=n>old</span><span class=p>[</span><span class=n>index</span><span class=p>]</span><span class=o>==</span><span class=n>rc</span><span class=o>.</span><span class=n>predict_getrandbits</span><span class=p>(</span><span class=mi>32</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=n>index</span><span class=o>+=</span><span class=mi>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>with</span> <span class=nb>open</span><span class=p>(</span><span class=s1>&#39;cl&#39;</span><span class=p>)</span> <span class=k>as</span> <span class=n>file</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=n>nlist</span> <span class=o>=</span> <span class=p>[</span><span class=nb>eval</span><span class=p>(</span><span class=n>i</span><span class=p>)</span> <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=n>file</span><span class=o>.</span><span class=n>read</span><span class=p>()</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=o>.</span><span class=n>split</span><span class=p>(</span><span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>with</span> <span class=nb>open</span><span class=p>(</span><span class=s1>&#39;new&#39;</span><span class=p>)</span> <span class=k>as</span> <span class=n>file</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=n>clist</span><span class=o>=</span><span class=p>[</span><span class=n>i</span><span class=o>.</span><span class=n>decode</span><span class=p>(</span><span class=s1>&#39;hex&#39;</span><span class=p>)</span> <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=n>file</span><span class=o>.</span><span class=n>read</span><span class=p>()</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=o>.</span><span class=n>split</span><span class=p>(</span><span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>key1</span><span class=o>=</span><span class=p>[]</span>
+</span></span><span class=line><span class=cl><span class=n>key2</span><span class=o>=</span><span class=p>[]</span>
+</span></span><span class=line><span class=cl><span class=n>key3</span><span class=o>=</span><span class=p>[]</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>24</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>key1</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>rc</span><span class=o>.</span><span class=n>predict_getrandbits</span><span class=p>(</span><span class=mi>128</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>24</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>key2</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>rc</span><span class=o>.</span><span class=n>predict_getrandbits</span><span class=p>(</span><span class=mi>128</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>24</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>key3</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>rc</span><span class=o>.</span><span class=n>predict_getrandbits</span><span class=p>(</span><span class=mi>128</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>tmp1</span><span class=o>=</span><span class=p>[]</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>24</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>handle</span> <span class=o>=</span> <span class=n>AES</span><span class=o>.</span><span class=n>new</span><span class=p>(</span><span class=n>long_to_bytes</span><span class=p>(</span><span class=n>key3</span><span class=p>[</span><span class=n>i</span><span class=p>]),</span> <span class=n>AES</span><span class=o>.</span><span class=n>MODE_CBC</span><span class=p>,</span> <span class=s2>&#34;</span><span class=se>\x00</span><span class=s2>&#34;</span><span class=o>*</span><span class=mi>16</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>tmpstate</span><span class=o>=</span><span class=n>handle</span><span class=o>.</span><span class=n>decrypt</span><span class=p>(</span><span class=n>clist</span><span class=p>[</span><span class=n>i</span><span class=p>])</span>
+</span></span><span class=line><span class=cl>    <span class=n>tmp1</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>tmpstate</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>tmp2</span><span class=o>=</span><span class=p>[]</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>24</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>handle</span> <span class=o>=</span> <span class=n>AES</span><span class=o>.</span><span class=n>new</span><span class=p>(</span><span class=n>long_to_bytes</span><span class=p>(</span><span class=n>key2</span><span class=p>[</span><span class=n>i</span><span class=p>]),</span> <span class=n>AES</span><span class=o>.</span><span class=n>MODE_CBC</span><span class=p>,</span> <span class=s2>&#34;</span><span class=se>\x00</span><span class=s2>&#34;</span><span class=o>*</span><span class=mi>16</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>tmpstate</span><span class=o>=</span><span class=n>handle</span><span class=o>.</span><span class=n>decrypt</span><span class=p>(</span><span class=n>tmp1</span><span class=p>[</span><span class=n>i</span><span class=p>])</span>
+</span></span><span class=line><span class=cl>    <span class=n>tmp2</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>tmpstate</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># tmp3=[]</span>
+</span></span><span class=line><span class=cl><span class=c1># for i in range(24):</span>
+</span></span><span class=line><span class=cl><span class=c1>#     handle = AES.new(long_to_bytes(key1[i]), AES.MODE_CBC, &#34;\x00&#34;*16)</span>
+</span></span><span class=line><span class=cl><span class=c1>#     tmpstate=handle.decrypt(tmp2[i])</span>
+</span></span><span class=line><span class=cl><span class=c1>#     tmp3.append(tmpstate)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>c</span><span class=o>=</span><span class=p>[]</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=n>tmp2</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=n>c</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>bytes_to_long</span><span class=p>(</span><span class=n>i</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>17</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span> <span class=s1>&#39;n = </span><span class=si>%d</span><span class=s1>&#39;</span><span class=o>%</span><span class=n>nlist</span><span class=p>[</span><span class=n>i</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span> <span class=s1>&#39;e = 17&#39;</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span> <span class=s1>&#39;c = </span><span class=si>%d</span><span class=s1>&#39;</span><span class=o>%</span><span class=n>c</span><span class=p>[</span><span class=n>i</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span> <span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span>
+</span></span></code></pre></td></tr></table></div></div><p>然后有了24组n,c；e=17。随便选择17组去广播攻击</p><p><img src=/blog/p/lrlr/rsa_solve.png width=1098 height=206 srcset="/blog/p/lrlr/rsa_solve_hu_1c8b6d3fc8092a61.png 480w, /blog/p/lrlr/rsa_solve_hu_d32c274470ed4880.png 1024w" loading=lazy alt=rsa_solve class=gallery-image data-flex-grow=533 data-flex-basis=1279px></p><p>最后一步类似jarvis oj上的bbencode原题，循环编码，判断flag开头的字符串</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-py data-lang=py><span class=line><span class=cl><span class=k>def</span> <span class=nf>bbencode</span><span class=p>(</span><span class=n>n</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>a</span> <span class=o>=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>bin</span><span class=p>(</span><span class=n>n</span><span class=p>)[</span><span class=mi>2</span><span class=p>:]:</span>
+</span></span><span class=line><span class=cl>        <span class=n>a</span> <span class=o>=</span> <span class=n>a</span> <span class=o>&lt;&lt;</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nb>int</span><span class=p>(</span><span class=n>i</span><span class=p>)):</span>
+</span></span><span class=line><span class=cl>            <span class=n>a</span> <span class=o>=</span> <span class=n>a</span> <span class=o>^</span> <span class=n>n</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=n>a</span> <span class=o>&gt;&gt;</span> <span class=mi>256</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>a</span> <span class=o>=</span> <span class=n>a</span> <span class=o>^</span> <span class=mh>0x10000000000000000000000000000000000000000000000000000000000000223</span><span class=n>L</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>a</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>result</span> <span class=o>=</span> <span class=mi>61406796444626535559771097418338494728649815464609781204026855332620301752444</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>10000</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>result</span> <span class=o>=</span> <span class=n>bbencode</span><span class=p>(</span><span class=n>result</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span><span class=p>(</span><span class=s2>&#34;666c6167&#34;</span> <span class=o>==</span> <span class=nb>str</span><span class=p>(</span><span class=nb>hex</span><span class=p>(</span><span class=n>result</span><span class=p>))[</span><span class=mi>2</span><span class=p>:</span><span class=mi>10</span><span class=p>]):</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span> <span class=n>i</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span> <span class=nb>hex</span><span class=p>(</span><span class=n>result</span><span class=p>)[</span><span class=mi>2</span><span class=p>:</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span><span class=o>.</span><span class=n>decode</span><span class=p>(</span><span class=s1>&#39;hex&#39;</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=下面写下细节>下面写下细节</h2><p>通过 <code>oldtest()</code> 中 <code>random.getrandbits()</code> 函数生成的随机数可以用 <code>randcrack</code> 库推断到之后 <code>lrandout()</code> 中调用 <code>stateconvert()</code> 和 <code>gen_new_states()</code> 时生成的128位随机数。</p><p>此随机数直接作为AES-128加密的密钥对 <code>clist[]</code> 进行加密，IV值为128位0 。</p><p>加密后的结果Append到 <code>states[]</code> 后，用的时候再通过 <code>stateconvert</code> 进行第二次AES加密(初始时(也就是 <code>newtest</code> 中第一个循环) <code>states[]</code> 数组中为长度为24的 <code>clist[]</code> 且 <code>stateselse == 24</code> 所以直接调用 <code>stateconvert</code> 一次加密得到输出)</p><p>我们现在已知二次AES加密后的结果；已知 <code>nlist[]</code>；需要先由随机数生成规律推断出作为密钥的随机数，通过AES解密得到 <code>clist[]</code>；然后看 <code>gen_states</code> 函数发现 <code>clist[]</code> 中的元素是同一个消息(<code>init_state</code>) 以 $e=17$ 为指数模不同的 $n$ 值所得。此处可以进行低指数广播攻击。</p><h3 id=低指数广播攻击>低指数广播攻击</h3><p><a class=link href=https://xz.aliyun.com/t/2731#toc-10 target=_blank rel=noopener>参考 一叶飘零 的 Crypto-RSA-公钥攻击小结</a>
+<a class=link href=https://github.com/ashutosh1206/Crypton/tree/master/RSA-encryption/Attack-Hastad-Broadcast target=_blank rel=noopener>参考 ashutosh1206 的 Hastad&rsquo;s Broadcast Attack</a>
+所谓“低指数”，指的是指数 $e &lt;= \text{广播成员数量(加密的消息数量)}$</p><h4 id=中国剩余定理>中国剩余定理</h4><p>对于下面的一元线性同余方程组：</p>$$
+\begin{equation*}
+\left\lbrace
+\begin{aligned}
+x \equiv & a_1 \bmod m_{1}\\
+	x \equiv & a_2 \bmod m_{2}\\
+& \vdots\\
+	x \equiv & a_n \bmod m_{n}\\
+\end{aligned}
+\right.
+\end{equation*}
+$$<p>假设$m_1,m_2,\ldots,m_n$中任意两数互质，则对任意整数$a_1,a_2,\ldots,a_n$，上述方程组有解，通解的构造方法如下：</p><ol><li>设$M = m_1\times m_2\times \cdots \times m_{n} = \prod\limits_{i=1}^{n} m_{i} $ 是整数$m_1,m_2,\ldots,m_{n}$ 的乘积</li><li>设$M_{i} = M / m_{i}, \forall i \in {1,2,\ldots,n}$</li><li>设$t_{i} = M_{i}^{-1}$ 为$M_{i}$ 模$m_{i}$ 的数论倒数</li><li>方程组的通解形式为：
+$$
+x = a_1t_1M_1+a_2t_2M_2+\cdots+a_{n}t_{n}M_{n} = kM+\sum_{i=1}^{n} a_{i}t_{i}M_{i},\qquad \forall k \in \mathbb{Z}.
+$$
+在模$M$ 的意义下方程组只有一个解：
+$$
+x=\sum_{i=1}^{n} a_{i}t_{i}M_{i}
+$$</li></ol><p>因此，对于本题</p>$$
+\begin{equation*}
+\left\lbrace
+\begin{aligned}
+m^{17} \equiv & c_1 \bmod n_1\\
+m^{17} \equiv & c_2 \bmod n_2\\
+& \vdots\\
+m^{17} \equiv & c_{17} \bmod n_{17}\\
+\end{aligned}
+\right.
+\end{equation*}
+$$<p>(要求$n_1,n_2,\ldots,n_{17}$两两互素，若不满足两两互素，可进行<a class=link href=https://github.com/ashutosh1206/Crypton/tree/master/RSA-encryption/Attack-Common-Prime target=_blank rel=noopener>共模攻击</a>)有</p><p>$$
+m^{17} = \sum_{i=1}^{17} c_{i}N_{i}N_{i}^{-1} mod N
+$$</p><p>其中，</p><p>$
+N = n_1\times n_2\times \cdots \times n_{17} = \prod\limits_{i=1}^{17} n_{i}
+$；</p><p>$
+N_{i} = N / n_{i}
+$；</p><p>$
+N_{i}^{-1} \cdot N_{i} \equiv 1 \bmod n_{i}
+$</p><p>因为$m &lt; n_{i} \quad \forall i \in {1,2,\ldots,17}$，所以$ m^{17} &lt; N = \prod\limits_{i=1}^{17} n_{i}$ 直接开方即可。</p><h4 id=hastad_unpaddedpy>hastad_unpadded.py</h4><p><a class=link href=https://github.com/ashutosh1206/Crypton/blob/master/RSA-encryption/Attack-Hastad-Broadcast/hastad_unpadded.py target=_blank rel=noopener>参考</a>
+只需关注 <code>crt</code> 函数和 <code>hastad_unpadded</code> 函数即可</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span><span class=lnt>71
+</span><span class=lnt>72
+</span><span class=lnt>73
+</span><span class=lnt>74
+</span><span class=lnt>75
+</span><span class=lnt>76
+</span><span class=lnt>77
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-py data-lang=py><span class=line><span class=cl><span class=ch>#!/usr/bin/env python2.7</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>Crypto.Util.number</span> <span class=kn>import</span> <span class=n>GCD</span><span class=p>,</span> <span class=n>bytes_to_long</span><span class=p>,</span> <span class=n>long_to_bytes</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>gmpy2</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>crt</span><span class=p>(</span><span class=n>list_a</span><span class=p>,</span> <span class=n>list_m</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>    Reference: https://crypto.stanford.edu/pbc/notes/numbertheory/crt.html
+</span></span></span><span class=line><span class=cl><span class=s2>    Returns the output after computing Chinese Remainder Theorem on
+</span></span></span><span class=line><span class=cl><span class=s2>    x = a_1 mod m_1
+</span></span></span><span class=line><span class=cl><span class=s2>    x = a_2 mod m_2
+</span></span></span><span class=line><span class=cl><span class=s2>    ...
+</span></span></span><span class=line><span class=cl><span class=s2>    x = a_n mod m_n
+</span></span></span><span class=line><span class=cl><span class=s2>    input parameter list_a = [a_1, a_2, ..., a_n]
+</span></span></span><span class=line><span class=cl><span class=s2>    input parameter list_m = [m_1, m_2, ..., m_n]
+</span></span></span><span class=line><span class=cl><span class=s2>    Returns -1 if the operation is unsuccessful due to some exceptions
+</span></span></span><span class=line><span class=cl><span class=s2>    &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>assert</span> <span class=nb>len</span><span class=p>(</span><span class=n>list_a</span><span class=p>)</span> <span class=o>==</span> <span class=nb>len</span><span class=p>(</span><span class=n>list_m</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span> <span class=s2>&#34;[+] Length of list_a should be equal to length of list_m&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=o>-</span><span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>list_m</span><span class=p>)):</span>
+</span></span><span class=line><span class=cl>        <span class=k>for</span> <span class=n>j</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>list_m</span><span class=p>)):</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=n>GCD</span><span class=p>(</span><span class=n>list_m</span><span class=p>[</span><span class=n>i</span><span class=p>],</span> <span class=n>list_m</span><span class=p>[</span><span class=n>j</span><span class=p>])</span><span class=o>!=</span> <span class=mi>1</span> <span class=ow>and</span> <span class=n>i</span><span class=o>!=</span><span class=n>j</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>                <span class=nb>print</span> <span class=s2>&#34;[+] Moduli should be pairwise co-prime&#34;</span>
+</span></span><span class=line><span class=cl>                <span class=k>return</span> <span class=o>-</span><span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=n>M</span> <span class=o>=</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=n>list_m</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>M</span> <span class=o>*=</span> <span class=n>i</span>
+</span></span><span class=line><span class=cl>    <span class=n>list_b</span> <span class=o>=</span> <span class=p>[</span><span class=n>M</span><span class=o>/</span><span class=n>i</span> <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=n>list_m</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=k>assert</span> <span class=nb>len</span><span class=p>(</span><span class=n>list_b</span><span class=p>)</span> <span class=o>==</span> <span class=nb>len</span><span class=p>(</span><span class=n>list_m</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>list_b_inv</span> <span class=o>=</span> <span class=p>[</span><span class=nb>int</span><span class=p>(</span><span class=n>gmpy2</span><span class=o>.</span><span class=n>invert</span><span class=p>(</span><span class=n>list_b</span><span class=p>[</span><span class=n>i</span><span class=p>],</span> <span class=n>list_m</span><span class=p>[</span><span class=n>i</span><span class=p>]))</span> <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>list_m</span><span class=p>))]</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span> <span class=s2>&#34;[+] Encountered an unusual error while calculating inverse using gmpy2.invert()&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=o>-</span><span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=n>x</span> <span class=o>=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>list_m</span><span class=p>)):</span>
+</span></span><span class=line><span class=cl>        <span class=n>x</span> <span class=o>+=</span> <span class=n>list_a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span><span class=o>*</span><span class=n>list_b</span><span class=p>[</span><span class=n>i</span><span class=p>]</span><span class=o>*</span><span class=n>list_b_inv</span><span class=p>[</span><span class=n>i</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>x</span> <span class=o>%</span> <span class=n>M</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>test_crt</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>    Checking the validity and consistency of CRT function
+</span></span></span><span class=line><span class=cl><span class=s2>    &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=n>list_a</span> <span class=o>=</span> <span class=p>[[</span><span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>],</span> <span class=p>[</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>,</span> <span class=mi>4</span><span class=p>],</span> <span class=p>[</span><span class=mi>6</span><span class=p>,</span> <span class=mi>4</span><span class=p>]]</span>
+</span></span><span class=line><span class=cl>    <span class=n>list_m</span> <span class=o>=</span> <span class=p>[[</span><span class=mi>5</span><span class=p>,</span> <span class=mi>7</span><span class=p>],</span> <span class=p>[</span><span class=mi>5</span><span class=p>,</span> <span class=mi>7</span><span class=p>,</span> <span class=mi>9</span><span class=p>,</span> <span class=mi>11</span><span class=p>],</span> <span class=p>[</span><span class=mi>7</span><span class=p>,</span> <span class=mi>8</span><span class=p>]]</span>
+</span></span><span class=line><span class=cl>    <span class=n>soln_list</span> <span class=o>=</span> <span class=p>[</span><span class=mi>17</span><span class=p>,</span> <span class=mi>1731</span><span class=p>,</span> <span class=mi>20</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>list_a</span><span class=p>)):</span>
+</span></span><span class=line><span class=cl>            <span class=k>assert</span> <span class=n>crt</span><span class=p>(</span><span class=n>list_a</span><span class=p>[</span><span class=n>i</span><span class=p>],</span> <span class=n>list_m</span><span class=p>[</span><span class=n>i</span><span class=p>])</span> <span class=o>==</span> <span class=n>soln_list</span><span class=p>[</span><span class=n>i</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span> <span class=s2>&#34;[+] CRT function broken. Check the function again!&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>hastad_unpadded</span><span class=p>(</span><span class=n>ct_list</span><span class=p>,</span> <span class=n>mod_list</span><span class=p>,</span> <span class=n>e</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>    Implementing Hastad&#39;s Broadcast Attack
+</span></span></span><span class=line><span class=cl><span class=s2>    &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=n>m_expo</span> <span class=o>=</span> <span class=n>crt</span><span class=p>(</span><span class=n>ct_list</span><span class=p>,</span> <span class=n>mod_list</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>m_expo</span> <span class=o>!=</span> <span class=o>-</span><span class=mi>1</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>eth_root</span> <span class=o>=</span> <span class=n>gmpy2</span><span class=o>.</span><span class=n>iroot</span><span class=p>(</span><span class=n>m_expo</span><span class=p>,</span> <span class=n>e</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=n>eth_root</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span> <span class=o>==</span> <span class=kc>False</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span> <span class=s2>&#34;[+] Cannot calculate e&#39;th root!&#34;</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=o>-</span><span class=mi>1</span>
+</span></span><span class=line><span class=cl>        <span class=k>elif</span> <span class=n>eth_root</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span> <span class=o>==</span> <span class=kc>True</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>	    <span class=c1># 注意，eth_root 为元组(mpz对象,布尔值)，需用eth_root[0]提取mpz对象</span>
+</span></span><span class=line><span class=cl>	    <span class=c1># 也可用gmpy2.digits(eth_root[0])</span>
+</span></span><span class=line><span class=cl>	    <span class=c1># 以字符串形式返回正确的结果</span>
+</span></span><span class=line><span class=cl>	    <span class=c1># https://gmpy2.readthedocs.io/en/latest/mpz.html#mpz-functions</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>long_to_bytes</span><span class=p>(</span><span class=n>eth_root</span><span class=p>[</span><span class=mi>0</span><span class=p>])</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span> <span class=s2>&#34;[+] Cannot calculate CRT&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=o>-</span><span class=mi>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>test_crt</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div><p>对于此题，我们传入 <code>hastad_unpadded(ct_list, mod_list, e)</code> 函数的三个参数分别为</p><ul><li><code>ct_list = clist</code></li><li><code>mod_list = nlist</code></li><li><code>e = 17</code></li></ul><p>(<code>clist</code> 和 <code>nlist</code> 通过前面大佬给的WP中的代码即可得到，用到了 <code>randcrack</code> 库)</p><p>通过上述代码我们成功得到了 <code>init_state</code> 的值</p><p><img src=/blog/p/lrlr/init_state.png width=922 height=95 srcset="/blog/p/lrlr/init_state_hu_ced054a798d65875.png 480w, /blog/p/lrlr/init_state_hu_7f7f95d0ded4bdc2.png 1024w" loading=lazy alt=init_state class=gallery-image data-flex-grow=970 data-flex-basis=2329px></p><p>与前面大佬给的一致.</p><h3 id=bbencode>bbencode</h3><p>获得 <code>init_state</code> 后就与 Jarvis OJ 上的题目完全一致了
+主要参考 <a class=link href=https://196011564.github.io/2018/12/11/CTF-JarvisOJ-Crypto-[61dctf]bbencode/index.html target=_blank rel=noopener>Jarvis oj crypto</a></p><p>大致的意思是将 <code>bbencode</code> 的输出再传给 <code>bbencode</code> ，反复作用，每一次都查看一下结果中前四个字节是不是“flag” ，如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-py data-lang=py><span class=line><span class=cl>    <span class=k>if</span><span class=p>(</span><span class=s2>&#34;666c6167&#34;</span> <span class=o>==</span> <span class=nb>str</span><span class=p>(</span><span class=nb>hex</span><span class=p>(</span><span class=n>result</span><span class=p>))[</span><span class=mi>2</span><span class=p>:</span><span class=mi>10</span><span class=p>]):</span>
+</span></span></code></pre></td></tr></table></div></div><p>&ldquo;666c6167&rdquo; 正好是 flag 的ascii码</p><p><img src=/blog/p/lrlr/flag.png width=862 height=216 srcset="/blog/p/lrlr/flag_hu_8b31587149b33f85.png 480w, /blog/p/lrlr/flag_hu_e875e448df6a3b1.png 1024w" loading=lazy alt=flag class=gallery-image data-flex-grow=399 data-flex-basis=957px></p><p>由于for循环执行10000次，每2695次迭代会得到一次flag，所以会输出三次flag</p></section><footer class=article-footer><section class=article-tags><a href=/blog/tags/lrlr/>Lrlr</a>
+<a href=/blog/tags/bbencode/>Bbencode</a></section><section class=article-copyright><svg class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span></section></footer><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css integrity=sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV crossorigin=anonymous><script src=https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js integrity=sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8 crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js integrity=sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05 crossorigin=anonymous defer></script><script>window.addEventListener("DOMContentLoaded",()=>{renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"$",right:"$",display:!1},{left:"\\(",right:"\\)",display:!1},{left:"\\[",right:"\\]",display:!0}],ignoredClasses:["gist"]})})</script></article><footer class=site-footer><section class=copyright>&copy;
+2019 -
+2025 cld4h's blog</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.26.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/blog/ts/main.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>

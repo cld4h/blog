@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Rawhtml on cld4h's blog</title><link>https://cld4h.github.io/blog/tags/rawhtml/</link><description>Recent content in Rawhtml on cld4h's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Wed, 21 Apr 2021 20:30:32 +0800</lastBuildDate><atom:link href="https://cld4h.github.io/blog/tags/rawhtml/index.xml" rel="self" type="application/rss+xml"/><item><title>Raw HTML in Hugo</title><link>https://cld4h.github.io/blog/p/raw-html-in-hugo/</link><pubDate>Wed, 21 Apr 2021 20:30:32 +0800</pubDate><guid>https://cld4h.github.io/blog/p/raw-html-in-hugo/</guid><description>&lt;p>&lt;a class="link" href="https://anaulin.org/blog/hugo-raw-html-shortcode/" target="_blank" rel="noopener"
+>Reference1&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://dyiwu.github.io/2019/04/escape-hugo-shortcode/" target="_blank" rel="noopener"
+>Reference2-escaping shortcode in hugo&lt;/a>&lt;/p>
+&lt;p>创建 &lt;code>layouts/shortcodes/rawhtml.html&lt;/code> 文件如下&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-html" data-lang="html">&lt;span class="line">&lt;span class="cl">&lt;span class="c">&amp;lt;!-- raw html --&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">{{.Inner}}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>可以通过如下方式使用&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">{{&amp;lt; rawhtml &amp;gt;}}
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;lt;p class=&amp;#34;speshal-fancy-custom&amp;#34;&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> This is &amp;lt;strong&amp;gt;raw HTML&amp;lt;/strong&amp;gt;, inside Markdown.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;lt;/p&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">{{&amp;lt; /rawhtml &amp;gt;}}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div></description></item></channel></rss>

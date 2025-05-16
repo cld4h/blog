@@ -1,0 +1,572 @@
+<!doctype html><html lang=en dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content='This article show you the ultimate way to set up a transparent proxy on Linux using clash and iptables to bypass the GFW in China.\nWe use:\nclash as the proxy software online subconverter and crontab to periodically update config file. ACL4SSR to provide GFW rules. You can go to github gist to download all files mentioned in this article.\nAll files you need:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 . ├── clash-base-config.yaml ---🟢base config for clash to work on tproxy and fake-ip mode ├── clash.service ---🟢systemd unit file to start up clash ├── clean.sh ---🟢script to clean iptables ├── config.ini ---🟢config file for subconverter ├── iptables.sh ---🟢iptables config file ├── update-config.sh ---🟡subscription update script; "XXXXXXXX" need to be replaced ├── config.yaml ---⭕clash config file, to be generated from update-config.sh ├── README.md └── README.zh-cn.md 🟢: Doesn&#39;t need to change 🟡: Needs to change ⭕: Needs to be generated Reference clash-tproxy\n'><title>The Ultimate Way to Bypass GFW on Linux</title>
+<link rel=canonical href=https://cld4h.github.io/blog/p/the-ultimate-way-to-bypass-gfw-on-linux/><link rel=stylesheet href=/blog/scss/style.min.0304c6baf04e01a8fe70693791cb744d56a3578a3120a8796cefc66825aa39c7.css><meta property='og:title' content="The Ultimate Way to Bypass GFW on Linux"><meta property='og:description' content='This article show you the ultimate way to set up a transparent proxy on Linux using clash and iptables to bypass the GFW in China.\nWe use:\nclash as the proxy software online subconverter and crontab to periodically update config file. ACL4SSR to provide GFW rules. You can go to github gist to download all files mentioned in this article.\nAll files you need:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 . ├── clash-base-config.yaml ---🟢base config for clash to work on tproxy and fake-ip mode ├── clash.service ---🟢systemd unit file to start up clash ├── clean.sh ---🟢script to clean iptables ├── config.ini ---🟢config file for subconverter ├── iptables.sh ---🟢iptables config file ├── update-config.sh ---🟡subscription update script; "XXXXXXXX" need to be replaced ├── config.yaml ---⭕clash config file, to be generated from update-config.sh ├── README.md └── README.zh-cn.md 🟢: Doesn&#39;t need to change 🟡: Needs to change ⭕: Needs to be generated Reference clash-tproxy\n'><meta property='og:url' content='https://cld4h.github.io/blog/p/the-ultimate-way-to-bypass-gfw-on-linux/'><meta property='og:site_name' content="cld4h's blog"><meta property='og:type' content='article'><meta property='article:section' content='Post'><meta property='article:tag' content='clash'><meta property='article:tag' content='tproxy'><meta property='article:tag' content='linux'><meta property='article:tag' content='GFW'><meta property='article:tag' content='fake-ip'><meta property='article:tag' content='透明代理'><meta property='article:tag' content='翻墙'><meta property='article:published_time' content='2022-05-04T16:19:40+08:00'><meta property='article:modified_time' content='2022-05-04T16:19:40+08:00'><meta property='og:image' content='https://cld4h.github.io/blog/p/the-ultimate-way-to-bypass-gfw-on-linux/iptables.webp'><meta name=twitter:title content="The Ultimate Way to Bypass GFW on Linux"><meta name=twitter:description content='This article show you the ultimate way to set up a transparent proxy on Linux using clash and iptables to bypass the GFW in China.\nWe use:\nclash as the proxy software online subconverter and crontab to periodically update config file. ACL4SSR to provide GFW rules. You can go to github gist to download all files mentioned in this article.\nAll files you need:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 . ├── clash-base-config.yaml ---🟢base config for clash to work on tproxy and fake-ip mode ├── clash.service ---🟢systemd unit file to start up clash ├── clean.sh ---🟢script to clean iptables ├── config.ini ---🟢config file for subconverter ├── iptables.sh ---🟢iptables config file ├── update-config.sh ---🟡subscription update script; "XXXXXXXX" need to be replaced ├── config.yaml ---⭕clash config file, to be generated from update-config.sh ├── README.md └── README.zh-cn.md 🟢: Doesn&#39;t need to change 🟡: Needs to change ⭕: Needs to be generated Reference clash-tproxy\n'><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content='https://cld4h.github.io/blog/p/the-ultimate-way-to-bypass-gfw-on-linux/iptables.webp'></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label="Toggle Menu">
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/blog/><img src=/blog/img/avataaars_hu_25972a44ed8b91a1.png width=300 height=318 class=site-logo loading=lazy alt=Avatar>
+</a><span class=emoji>🏡</span></figure><div class=site-meta><h1 class=site-name><a href=/blog>cld4h's blog</a></h1><h2 class=site-description>Self sufficient!</h2></div></header><ol class=menu-social><li><a href=mailto:cld4h@disroot.org target=_blank title=email rel=me><svg class="icon icon-tabler icon-tabler-email" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5s16 0 16 0c1.19.0 2 .13 2 1.5V17.5C22 18.87 21.19 19 20 19H4C2.81 19 2 18.87 2 17.5V7c0-1.37.81-1.5 2-1.5z"/><path d="M2.5 6c2 2 4 4 5.58 5.25C9.67 12.5 10.83 13 12 13s2.33-.5 3.92-1.75C17.5 10 19.5 8 21.5 6"/><path d="M8.5 12c-2 1.67-4 3.33-6 5"/><path d="M15.5 12c2 1.67 4 3.33 6 5"/></svg></a></li><li><a href=https://github.com/cld4h target=_blank title=GitHub rel=me><svg class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li><li><a href=/blog/about/#rss-links target=_blank title=RSS rel=me><svg class="icon icon-tabler icon-tabler-rss" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="5" cy="19" r="1"/><path d="M4 4a16 16 0 0116 16"/><path d="M4 11a9 9 0 019 9"/></svg></a></li><li><a href=/blog/about/#xmpp target=_blank title=xmpp:cld4h@disroot.org rel=me><svg class="icon icon-tabler icon-tabler-messages" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M21 14l-3-3h-7a1 1 0 01-1-1V4a1 1 0 011-1h9a1 1 0 011 1v10"/><path d="M14 15v2a1 1 0 01-1 1H6l-3 3V11a1 1 0 011-1h2"/></svg></a></li></ol><ol class=menu id=main-menu><li><a href=/blog/blog target=_blank><svg class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="5 12 3 12 12 3 21 12 19 12"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/><path d="M9 21v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
+<span>Home</span></a></li><li><a href=/blog/archives/><svg class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><rect x="3" y="4" width="18" height="4" rx="2"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+<span>Archives</span></a></li><li><a href=/blog/search/><svg class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>
+<span>Search</span></a></li><li><a href=/blog/about/><svg class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+<span>About</span></a></li><li class=menu-bottom-section><ol class=menu><li id=i18n-switch><svg class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c-.003 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg>
+<select name=language title=language onchange="window.location.href=this.selectedOptions[0].value"><option value=https://cld4h.github.io/blog/ selected>English</option><option value=https://cld4h.github.io/blog/zh-tw/>中文正體</option><option value=https://cld4h.github.io/blog/zh-cn/>中文简体</option></select></li><li id=dark-mode-toggle><svg class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>Dark Mode</span></li></ol></li></ol></aside><main class="main full-width"><article class="has-image main-article"><header class=article-header><div class=article-image><a href=/blog/p/the-ultimate-way-to-bypass-gfw-on-linux/><img src=/blog/p/the-ultimate-way-to-bypass-gfw-on-linux/iptables_hu_762e744d60e57017.webp srcset="/blog/p/the-ultimate-way-to-bypass-gfw-on-linux/iptables_hu_762e744d60e57017.webp 800w, /blog/p/the-ultimate-way-to-bypass-gfw-on-linux/iptables_hu_435900ea4b83b75f.webp 1600w" width=800 height=348 loading=lazy alt="Featured image of post The Ultimate Way to Bypass GFW on Linux"></a></div><div class=article-details><div class=article-title-wrapper><h2 class=article-title><a href=/blog/p/the-ultimate-way-to-bypass-gfw-on-linux/>The Ultimate Way to Bypass GFW on Linux</a></h2></div><footer class=article-time><div><svg class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>May 04, 2022</time></div><div><svg class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>10 minute read</time></div></footer><footer class=article-translations><svg class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c-.003 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg><div><a href=https://cld4h.github.io/blog/zh-cn/p/linux-%E4%B8%8B%E7%9A%84%E5%85%A8%E8%BF%87%E7%A8%8B%E7%BF%BB%E5%A2%99/ class=link>中文简体</a></div></footer></div></header><section class=article-content><p>This article show you the ultimate way to set up a transparent proxy on Linux using clash and iptables to bypass the GFW in China.</p><p>We use:</p><ul><li><a class=link href=https://github.com/Dreamacro/clash target=_blank rel=noopener>clash</a> as the proxy software</li><li><a class=link href=https://github.com/tindy2013/subconverter target=_blank rel=noopener>online subconverter</a> and crontab to periodically update config file.</li><li><a class=link href=https://github.com/ACL4SSR/ACL4SSR/tree/master target=_blank rel=noopener>ACL4SSR</a> to provide GFW rules.</li></ul><p>You can go to <a class=link href=https://gist.github.com/cld4h/9a03ec2f826a25be5ab974fdbc540de4 target=_blank rel=noopener>github gist</a> to download all files mentioned in this article.</p><p>All files you need:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-txt data-lang=txt><span class=line><span class=cl>.
+</span></span><span class=line><span class=cl>├── clash-base-config.yaml  ---🟢base config for clash to work on tproxy and fake-ip mode
+</span></span><span class=line><span class=cl>├── clash.service           ---🟢systemd unit file to start up clash
+</span></span><span class=line><span class=cl>├── clean.sh                ---🟢script to clean iptables
+</span></span><span class=line><span class=cl>├── config.ini              ---🟢config file for subconverter
+</span></span><span class=line><span class=cl>├── iptables.sh             ---🟢iptables config file
+</span></span><span class=line><span class=cl>├── update-config.sh        ---🟡subscription update script; &#34;XXXXXXXX&#34; need to be replaced
+</span></span><span class=line><span class=cl>├── config.yaml             ---⭕clash config file, to be generated from update-config.sh
+</span></span><span class=line><span class=cl>├── README.md
+</span></span><span class=line><span class=cl>└── README.zh-cn.md
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>🟢: Doesn&#39;t need to change
+</span></span><span class=line><span class=cl>🟡: Needs to change
+</span></span><span class=line><span class=cl>⭕: Needs to be generated
+</span></span></code></pre></td></tr></table></div></div><h2 id=reference>Reference</h2><p><a class=link href=https://www.sobyte.net/post/2022-02/clash-tproxy/ target=_blank rel=noopener>clash-tproxy</a></p><p><a class=link href=https://git.breakpoint.cc/cgit/fw/tcprdr.git target=_blank rel=noopener>Transparent proxy demo code</a></p><h2 id=prerequisite>Prerequisite</h2><ul><li>a <code>clash</code> installed. (By default in <code>/usr/bin/clash</code>)</li><li>iptables</li><li>systemd (It&rsquo;s totally fine to use other init programs, but here I&rsquo;ll only show the configuration of systemd, which is the default of most GNU/Linux distros.)</li><li>crontab</li></ul><h2 id=steps>Steps</h2><h3 id=create-a-system-user-called-clash>Create a system user called clash</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>useradd -r -M -s /usr/sbin/nologin clash
+</span></span></code></pre></td></tr></table></div></div><p>Since we want to proxy all internet traffics, we need to prevent the traffic from looping.
+Thus, we create a distinct user called <code>clash</code> (the name can be arbitrary) to run the proxy software <code>clash</code>.
+We&rsquo;ll make an iptables rule in the following steps to distinguish traffic coming from the user <code>clash</code>.</p><h3 id=create-iptables-and-routing-rules>Create iptables and routing rules</h3><p>Create a shell script of iptables command called <code>/etc/clash/iptables.sh</code>.</p><p>The file contains 3 main sections:</p><ol><li>iptables rules to hijack the dns query traffic,</li><li>config for <code>clash</code> chain</li><li>config for <code>clash_local</code> chain</li></ol><p>iptables:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-txt data-lang=txt><span class=line><span class=cl>┌─────────┐                                                                                      ┌─────────┐
+</span></span><span class=line><span class=cl>│         │             PREROUTING                                                INPUT          │         │
+</span></span><span class=line><span class=cl>│         │                                                                                      │         │
+</span></span><span class=line><span class=cl>│         │  ┌─────────────────────────────────────┐                      ┌────────────────────┐ │         │
+</span></span><span class=line><span class=cl>│         │  │                                     │         /───\        │                    │ │         │
+</span></span><span class=line><span class=cl>│         │  │ ┌───┐  ┌─────────┐  ┌──────┐  ┌───┐ │        /     \       │ ┌──────┐  ┌──────┐ │ │         │
+</span></span><span class=line><span class=cl>│         ├──┤►│raw├─►│conntrack├─►│mangle├─►│nat├─┼──────►&lt;routing&gt;──────┤►│mangle├─►│filter├─┤►│         │
+</span></span><span class=line><span class=cl>│         │  │ └───┘  └─────────┘  └──────┘  └───┘ │        \     /       │ └──────┘  └──────┘ │ │         │
+</span></span><span class=line><span class=cl>│         │  │                                     │         \─┬─/        │                    │ │         │
+</span></span><span class=line><span class=cl>│         │  └─────────────────────────────────────┘           │          └────────────────────┘ │         │
+</span></span><span class=line><span class=cl>│         │                                                    │                                 │         │
+</span></span><span class=line><span class=cl>│         │                               ┌──────────┐         │                                 │         │
+</span></span><span class=line><span class=cl>│         │                               │          │         │                                 │         │
+</span></span><span class=line><span class=cl>│         │                               │ ┌──────┐ │         │                                 │         │
+</span></span><span class=line><span class=cl>│         │                               │ │mangle◄─┼─────────┘                                 │         │
+</span></span><span class=line><span class=cl>│ Network │                               │ └──┬───┘ │                                           │  Local  │
+</span></span><span class=line><span class=cl>│Interface│                               │    │     │ FORWARD                                   │ Process │
+</span></span><span class=line><span class=cl>│         │                               │ ┌──▼───┐ │                                  /───\    │         │
+</span></span><span class=line><span class=cl>│         │               ┌───────────────┼─┤filter│ │                                 /     \   │         │
+</span></span><span class=line><span class=cl>│         │               │               │ └──────┘ │                                &lt;routing&gt;◄─┤         │
+</span></span><span class=line><span class=cl>│         │               │               │          │                                 \     /   │         │
+</span></span><span class=line><span class=cl>│         │               │               └──────────┘                                  \─┬─/    │         │
+</span></span><span class=line><span class=cl>│         │               │                                                               │      │         │
+</span></span><span class=line><span class=cl>│         │  ┌────────────┼────┐               ┌──────────────────────────────────────────┼────┐ │         │
+</span></span><span class=line><span class=cl>│         │  │            │    │     ─────     │                                          │    │ │         │
+</span></span><span class=line><span class=cl>│         │  │ ┌───┐  ┌───▼──┐ │    /     \    │ ┌──────┐  ┌───┐  ┌──────┐  ┌─────────┐  ┌▼──┐ │ │         │
+</span></span><span class=line><span class=cl>│         │◄─┼─┤nat│◄─┤mangle│◄├───&lt;reroute&gt;───┼─┤filter│◄─┤nat│◄─┤mangle│◄─┤conntrack│◄─┤raw│ │ │         │
+</span></span><span class=line><span class=cl>│         │  │ └───┘  └──────┘ │    \check/    │ └──────┘  └───┘  └──────┘  └─────────┘  └───┘ │ │         │
+</span></span><span class=line><span class=cl>│         │  │                 │     ─────     │                                               │ │         │
+</span></span><span class=line><span class=cl>│         │  └─────────────────┘               └───────────────────────────────────────────────┘ │         │
+</span></span><span class=line><span class=cl>│         │     POSTROUTING                                        OUTPUT                        │         │
+</span></span><span class=line><span class=cl>│         │                                                                                      │         │
+</span></span><span class=line><span class=cl>└─────────┘                                                                                      └─────────┘
+</span></span></code></pre></td></tr></table></div></div><p><code>/etc/clash/iptables.sh</code></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=cp>#!/usr/bin/env bash
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=c1># set -ex options:</span>
+</span></span><span class=line><span class=cl><span class=c1># -e Exit immediately if a command exits with a non-zero status</span>
+</span></span><span class=line><span class=cl><span class=c1># -x Print commands and their arguments as they are executed.</span>
+</span></span><span class=line><span class=cl><span class=nb>set</span> -ex
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># ENABLE ipv4 forward</span>
+</span></span><span class=line><span class=cl>sysctl -w net.ipv4.ip_forward<span class=o>=</span><span class=m>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># ROUTE RULES</span>
+</span></span><span class=line><span class=cl>ip rule add fwmark <span class=m>666</span> table <span class=m>666</span>
+</span></span><span class=line><span class=cl>ip route add <span class=nb>local</span> 0.0.0.0/0 table <span class=m>666</span> dev lo
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>##################################</span>
+</span></span><span class=line><span class=cl><span class=c1>## hijack the dns query traffic ##</span>
+</span></span><span class=line><span class=cl><span class=c1>##################################</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Redirect all dns query traffic from LAN to port 1053</span>
+</span></span><span class=line><span class=cl><span class=c1># Later clash will return a fake ip in 198.18.0.1/16</span>
+</span></span><span class=line><span class=cl>iptables -t nat -I PREROUTING -p udp --dport <span class=m>53</span> -j REDIRECT --to <span class=m>1053</span>
+</span></span><span class=line><span class=cl><span class=c1># same for ipv6</span>
+</span></span><span class=line><span class=cl>ip6tables -t nat -I PREROUTING -p udp --dport <span class=m>53</span> -j REDIRECT --to <span class=m>1053</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Redirect dns query traffic from all local processes (except owned by user clash) to port 1053</span>
+</span></span><span class=line><span class=cl><span class=c1># Later clash will return a fake ip in 198.18.0.1/16</span>
+</span></span><span class=line><span class=cl>iptables -t nat -N clash_dns
+</span></span><span class=line><span class=cl>iptables -t nat -A OUTPUT -p udp --dport <span class=m>53</span> -j clash_dns
+</span></span><span class=line><span class=cl>iptables -t nat -A clash_dns -m owner --uid-owner clash -j RETURN
+</span></span><span class=line><span class=cl>iptables -t nat -A clash_dns -p udp -j REDIRECT --to-ports <span class=m>1053</span>
+</span></span><span class=line><span class=cl><span class=c1># same for ipv6</span>
+</span></span><span class=line><span class=cl>ip6tables -t nat -N clash_dns
+</span></span><span class=line><span class=cl>ip6tables -t nat -A OUTPUT -p udp --dport <span class=m>53</span> -j clash_dns
+</span></span><span class=line><span class=cl>ip6tables -t nat -A clash_dns -m owner --uid-owner clash -j RETURN
+</span></span><span class=line><span class=cl>ip6tables -t nat -A clash_dns -p udp -j REDIRECT --to-ports <span class=m>1053</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>##############################</span>
+</span></span><span class=line><span class=cl><span class=c1>## config for `clash` chain ##</span>
+</span></span><span class=line><span class=cl><span class=c1>##############################</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># `clash` chain for using tproxy to redirect traffic to the clash listening port 7893</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -N clash
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># skip traffic to LAN or reserved address</span>
+</span></span><span class=line><span class=cl><span class=c1># reference:</span>
+</span></span><span class=line><span class=cl><span class=c1># https://en.wikipedia.org/wiki/List_of_assigned_/8_IPv4_address_blocks</span>
+</span></span><span class=line><span class=cl><span class=c1># https://en.wikipedia.org/wiki/Private_network#IPv4</span>
+</span></span><span class=line><span class=cl><span class=c1># IANA - Local Identification</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash -d 0.0.0.0/8 -j RETURN
+</span></span><span class=line><span class=cl><span class=c1># IANA - Loopback</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash -d 127.0.0.0/8 -j RETURN
+</span></span><span class=line><span class=cl><span class=c1># IANA - Private Use</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash -d 10.0.0.0/8 -j RETURN
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash -d 172.16.0.0/12 -j RETURN
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash -d 192.168.0.0/16 -j RETURN
+</span></span><span class=line><span class=cl><span class=c1># IPv4 Link-Local Addresses</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash -d 169.254.0.0/16 -j RETURN
+</span></span><span class=line><span class=cl><span class=c1># Multicast</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash -d 224.0.0.0/4 -j RETURN
+</span></span><span class=line><span class=cl><span class=c1># Future Use</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash -d 240.0.0.0/4 -j RETURN
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Forward all the other traffic to port 7893 and set tproxy mark</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash -p tcp -j TPROXY --on-port <span class=m>7893</span> --tproxy-mark <span class=m>666</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash -p udp -j TPROXY --on-port <span class=m>7893</span> --tproxy-mark <span class=m>666</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Append the `clash` chain to PREROUTING to enable it</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A PREROUTING -j clash
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>####################################</span>
+</span></span><span class=line><span class=cl><span class=c1>## config for `clash_local` chain ##</span>
+</span></span><span class=line><span class=cl><span class=c1>####################################</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># `clash_local` chain to manipulate the traffic from local process: set fwmark 666 on traffic to public address</span>
+</span></span><span class=line><span class=cl><span class=c1># (which will later reroute to dev lo, then redirect to tproxy port 7893 on the `clash` chain of `PREROUTING`)</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -N clash_local
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># rerouting traffic from nerdctl container</span>
+</span></span><span class=line><span class=cl><span class=c1>#iptables -t mangle -A clash_local -i nerdctl2 -p udp -j MARK --set-mark 666</span>
+</span></span><span class=line><span class=cl><span class=c1>#iptables -t mangle -A clash_local -i nerdctl2 -p tcp -j MARK --set-mark 666</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Don&#39;t touch traffic to LAN and reserved address</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash_local -d 0.0.0.0/8 -j RETURN
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash_local -d 127.0.0.0/8 -j RETURN
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash_local -d 10.0.0.0/8 -j RETURN
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash_local -d 172.16.0.0/12 -j RETURN
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash_local -d 192.168.0.0/16 -j RETURN
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash_local -d 169.254.0.0/16 -j RETURN
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash_local -d 224.0.0.0/4 -j RETURN
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash_local -d 240.0.0.0/4 -j RETURN
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># set mark for local traffic</span>
+</span></span><span class=line><span class=cl><span class=c1># clash_local set mark for the traffic from local process,</span>
+</span></span><span class=line><span class=cl><span class=c1># the marked traffic will come back to PREROUTING chain.</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash_local -p tcp -j MARK --set-mark <span class=m>666</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A clash_local -p udp -j MARK --set-mark <span class=m>666</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Don&#39;t touch traffic from a serving port</span>
+</span></span><span class=line><span class=cl><span class=c1># https web server</span>
+</span></span><span class=line><span class=cl><span class=c1># iptables -t mangle -I OUTPUT -p tcp --sport 443 -j RETURN</span>
+</span></span><span class=line><span class=cl><span class=c1># transmission</span>
+</span></span><span class=line><span class=cl><span class=c1># iptables -t mangle -I OUTPUT -p tcp --sport 51413 -j RETURN</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Don&#39;t touch traffic from the user `clash` to prevent looping</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A OUTPUT -p tcp -m owner --uid-owner clash -j RETURN
+</span></span><span class=line><span class=cl>iptables -t mangle -A OUTPUT -p udp -m owner --uid-owner clash -j RETURN
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Append the `clash_local` chain to OUTPUT to enable it</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -A OUTPUT -j clash_local
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#######################</span>
+</span></span><span class=line><span class=cl><span class=c1>## unimportant staff ##</span>
+</span></span><span class=line><span class=cl><span class=c1>#######################</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># fix ICMP(ping)</span>
+</span></span><span class=line><span class=cl><span class=c1># This step does NOT make the ping result validate</span>
+</span></span><span class=line><span class=cl><span class=c1># (clash doesn&#39;t support forwarding ICMP), it just makes ping have a result.</span>
+</span></span><span class=line><span class=cl><span class=c1># set --to-destination to a accessable address.</span>
+</span></span><span class=line><span class=cl><span class=c1>#sysctl -w net.ipv4.conf.all.route_localnet=1</span>
+</span></span><span class=line><span class=cl><span class=c1>#iptables -t nat -A PREROUTING -p icmp -d 198.18.0.0/16 -j DNAT --to-destination 127.0.0.1</span>
+</span></span><span class=line><span class=cl><span class=c1>#iptables -t nat -A OUTPUT -p icmp -d 198.18.0.0/16 -j DNAT --to-destination 127.0.0.1</span>
+</span></span></code></pre></td></tr></table></div></div><p>After applying the script above, the system iptables should be like this:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-txt data-lang=txt><span class=line><span class=cl>┌─────────┐                                                                                      ┌─────────┐
+</span></span><span class=line><span class=cl>│         │             PREROUTING           rule1*                               INPUT          │         │
+</span></span><span class=line><span class=cl>│         │                                    │                                                 │         │
+</span></span><span class=line><span class=cl>│         │  ┌─────────────────────────────────┼───┐                      ┌────────────────────┐ │         │
+</span></span><span class=line><span class=cl>│         │  │                                 │   │         /───\        │                    │ │         │
+</span></span><span class=line><span class=cl>│         │  │ ┌───┐  ┌─────────┐  ┌──────┐  ┌─┴─┐ │        /     \       │ ┌──────┐  ┌──────┐ │ │         │
+</span></span><span class=line><span class=cl>│         ├──┤►│raw├─►│conntrack├─►│mangle├─►│nat├─┼──────►&lt;routing&gt;──────┤►│mangle├─►│filter├─┤►│         │
+</span></span><span class=line><span class=cl>│         │  │ └───┘  └─────────┘  └┬─────┘  └───┘ │        \     /       │ └──────┘  └──────┘ │ │         │
+</span></span><span class=line><span class=cl>│         │  │                      │              │         \─┬─/        │                    │ │         │
+</span></span><span class=line><span class=cl>│         │  └──────────────────────┼──────────────┘           │          └────────────────────┘ │         │
+</span></span><span class=line><span class=cl>│         │                         │                          │                                 │         │
+</span></span><span class=line><span class=cl>│         │                      ┌──┴──┐  ┌──────────┐         │                                 │         │
+</span></span><span class=line><span class=cl>│         │                      │clash│  │          │         │                                 │         │
+</span></span><span class=line><span class=cl>│         │                      └─────┘  │ ┌──────┐ │         │                                 │         │
+</span></span><span class=line><span class=cl>│         │                               │ │mangle◄─┼─────────┘                                 │         │
+</span></span><span class=line><span class=cl>│ Network │                               │ └──┬───┘ │              ┌───────────┐                │  Local  │
+</span></span><span class=line><span class=cl>│Interface│                               │    │     │ FORWARD      │clash_local│                │ Process │
+</span></span><span class=line><span class=cl>│         │                               │ ┌──▼───┐ │              └─┬─────────┘       /───\    │         │
+</span></span><span class=line><span class=cl>│         │               ┌───────────────┼─┤filter│ │                │                /     \   │         │
+</span></span><span class=line><span class=cl>│         │               │               │ └──────┘ │                ├───rule3*      &lt;routing&gt;◄─┤         │
+</span></span><span class=line><span class=cl>│         │               │               │          │                │                \     /   │         │
+</span></span><span class=line><span class=cl>│         │               │               └──────────┘                ├───rule2*        \─┬─/    │         │
+</span></span><span class=line><span class=cl>│         │               │                                           │                   │      │         │
+</span></span><span class=line><span class=cl>│         │  ┌────────────┼────┐               ┌──────────────────────┼───────────────────┼────┐ │         │
+</span></span><span class=line><span class=cl>│         │  │            │    │     ─────     │                      │                   │    │ │         │
+</span></span><span class=line><span class=cl>│         │  │ ┌───┐  ┌───▼──┐ │    /     \    │ ┌──────┐  ┌───┐  ┌───┴──┐  ┌─────────┐  ┌▼──┐ │ │         │
+</span></span><span class=line><span class=cl>│         │◄─┼─┤nat│◄─┤mangle│◄├───&lt;reroute&gt;───┼─┤filter│◄─┤nat│◄─┤mangle│◄─┤conntrack│◄─┤raw│ │ │         │
+</span></span><span class=line><span class=cl>│         │  │ └───┘  └──────┘ │    \check/    │ └──────┘  └┬──┘  └──────┘  └─────────┘  └───┘ │ │         │
+</span></span><span class=line><span class=cl>│         │  │                 │     ─────     │            │                                  │ │         │
+</span></span><span class=line><span class=cl>│         │  └─────────────────┘               └────────────┼──────────────────────────────────┘ │         │
+</span></span><span class=line><span class=cl>│         │     POSTROUTING                                 │      OUTPUT                        │         │
+</span></span><span class=line><span class=cl>│         │                                          ┌──────┴──┐                                 │         │
+</span></span><span class=line><span class=cl>└─────────┘                                          │clash_dns│                                 └─────────┘
+</span></span><span class=line><span class=cl>                                                     └─────────┘
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> *rule1: iptables -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to 1053
+</span></span><span class=line><span class=cl> *rule2: iptables -t mangle -A OUTPUT -p tcp -m owner --uid-owner clash -j RETURN
+</span></span><span class=line><span class=cl> *rule3: iptables -t mangle -A OUTPUT -p udp -m owner --uid-owner clash -j RETURN
+</span></span></code></pre></td></tr></table></div></div><p>It&rsquo;s also worth to take a look at the route rules in <code>iptables.sh</code>:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-sh data-lang=sh><span class=line><span class=cl>ip rule add fwmark <span class=m>666</span> table <span class=m>666</span>
+</span></span><span class=line><span class=cl>ip route add <span class=nb>local</span> 0.0.0.0/0 table <span class=m>666</span> dev lo
+</span></span></code></pre></td></tr></table></div></div><p><code>ip rule</code> manipulates rules in the routing policy database control the route selection algorithm.</p><p>So here the <code>ip rule</code> command make the kernel to lookup table 666 for packets with fwmark 666</p><p><a class=link href=http://linux-ip.net/html/tools-ip-rule.html target=_blank rel=noopener>ip rule reference is here.</a></p><p>The <code>ip route</code> command add a default route to device lo on routing table 666.</p><p>We can use <code>ip route show table 666</code> to see the route added by <code>ip route add local 0.0.0.0/0 table 666 dev lo</code></p><p>See the route table value and name mapping:
+<code>cat /etc/iproute2/rt_tables</code></p><h3 id=create-a-cleaning-script>Create a cleaning script</h3><p>Create a shell script to clean the iptables.</p><p><code>-D</code> or <code>--delete</code>:</p><p>Delete one or more rules from the selected chain.
+There are two versions of this command:
+the rule can be specified as a number in the chain (starting at 1 for the first rule) or a rule to match.</p><p><code>-F</code> or <code>--flush</code>:</p><p>Flush the selected chain (all the chains in the table if none is given).
+This is equivalent to deleting all the rules one by one.</p><p><code>-X</code> or <code>--delete-chain</code>:</p><p>Delete the optional user-defined chain specified.
+There must be no references to the chain.
+If there are, you must delete or replace the referring rules before the chain can be deleted.
+The chain must be empty, i.e. not contain any rules.
+If no argument is given, it will attempt to delete every non-builtin chain in the table.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-sh data-lang=sh><span class=line><span class=cl><span class=cp>#!/usr/bin/env bash
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=nb>set</span> -ex
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>ip rule del fwmark <span class=m>666</span> table <span class=m>666</span> <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>ip route del <span class=nb>local</span> 0.0.0.0/0 table <span class=m>666</span> dev lo <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>iptables -t nat -D PREROUTING -p udp --dport <span class=m>53</span> -j REDIRECT --to <span class=m>1053</span> <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>ip6tables -t nat -D PREROUTING -p udp --dport <span class=m>53</span> -j REDIRECT --to <span class=m>1053</span> <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>iptables -t nat -D OUTPUT -p udp --dport <span class=m>53</span> -j clash_dns <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>ip6tables -t nat -D OUTPUT -p udp --dport <span class=m>53</span> -j clash_dns <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>iptables -t nat -F clash_dns <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>iptables -t nat -X clash_dns <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>ip6tables -t nat -F clash_dns <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>ip6tables -t nat -X clash_dns <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl><span class=c1>#iptables -t nat -D PREROUTING -p icmp -d 198.18.0.0/16 -j DNAT --to-destination 127.0.0.1</span>
+</span></span><span class=line><span class=cl><span class=c1>#iptables -t nat -D OUTPUT -p icmp -d 198.18.0.0/16 -j DNAT --to-destination 127.0.0.1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>iptables -t mangle -D PREROUTING -j clash <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -F clash <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -X clash <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>iptables -t mangle -D OUTPUT -p tcp -m owner --uid-owner clash -j RETURN <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -D OUTPUT -p udp -m owner --uid-owner clash -j RETURN <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -D OUTPUT -j clash_local <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -F clash_local <span class=o>||</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl>iptables -t mangle -X clash_local <span class=o>||</span> <span class=nb>true</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=fixing-ping>Fixing ping</h3><p>One major drawback of the fake-ip mode is that you can&rsquo;t ping a fake ip.</p><p>The solution above to redirect all ping request to the localhost is &ldquo;掩耳盗铃&rdquo;, it doesn&rsquo;t provide any useful information.</p><p>Sadly, all devices from LAN can&rsquo;t use ping, but fortunately you can alias ping to <code>sudo -u clash ping</code> for this gateway to use ping.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-sh data-lang=sh><span class=line><span class=cl><span class=nb>alias</span> <span class=nv>ping</span><span class=o>=</span><span class=s2>&#34;sudo -u clash ping&#34;</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=provide-a-systemd-unit-file-to-start-clash-at-a-single-command>Provide a systemd unit file to start clash at a single command</h3><p>This step is optional, but I felt it&rsquo;s extremely convenient to start clash by running a single command.</p><p>You can also make clash start at boot time.</p><p>The systemd config file is in the appended files with the name <code>clash.service</code></p><p>put it under <code>/usr/lib/systemd/system</code>, and run <code>sudo systemctl start clash</code> to start running clash.</p><p>To start it at boot time, run <code>sudo systemctl enable clash</code>.</p><h3 id=configuring-clash>Configuring clash</h3><p>Now let&rsquo;s set clash up to work.</p><p>Clash use <code>-d</code> option to set configuration directory and <code>-f</code> option to specify configuration file.</p><p>The default configuration file name is <code>config.yaml</code> when <code>-f</code> is omitted.</p><p>We want to use <code>crontab</code> to periodically update the clash config from a subscription url.</p><h4 id=construct-the-subscription-url>Construct the subscription URL</h4><p>TL;DR. Just replace <code>XXXXXXXX</code> with your <a class=link href=https://www.urlencoder.io/ target=_blank rel=noopener>encoded</a> subscription URL .</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>https://sub.xeton.dev/sub?target=clash&amp;new_name=true&amp;filename=config.yaml&amp;url=XXXXXXXX&amp;config=https%3A%2F%2Fgist.githubusercontent.com%2Fcld4h%2F9a03ec2f826a25be5ab974fdbc540de4%2Fraw%2Fconfig.ini
+</span></span></code></pre></td></tr></table></div></div><p>We use <a class=link href=https://github.com/tindy2013/subconverter target=_blank rel=noopener>subconverter</a> to generate config file for clash.</p><p>You need to change a few parameters in the subscription URL
+to generate a proper config file for clash to work in fake-ip mode.</p><p>To be specific:</p><ol><li>the <code>url</code> parameter should be the correct subscription URL and <a class=link href=https://www.urlencoder.io/ target=_blank rel=noopener>encoded</a>.</li><li>Multiple subscription URL should be seperated by <code>|</code>, or <code>%7C</code> after <a class=link href=https://www.urlencoder.io/ target=_blank rel=noopener>URL Encoding</a>.</li><li>the <code>config</code> parameter should point to <a class=link href=https://gist.githubusercontent.com/cld4h/9a03ec2f826a25be5ab974fdbc540de4/raw/config.ini target=_blank rel=noopener>a correct configuration file</a>. ⚠️</li></ol><p>⚠️ NOTICE: the configuration file for subconverter is extremely important!</p><p><a class=link href=https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini target=_blank rel=noopener>ACL4SSR project provide a default configuration file for subconverter</a>, it&rsquo;s fine but NOT ENOUGH for clash to work on fake-ip mode.</p><p>To make it work, you need specify <code>clash_rule_base</code> by inserting this line to <a class=link href=https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini target=_blank rel=noopener>the configuration file for <strong>subconverter</strong></a></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>clash_rule_base=https://gist.githubusercontent.com/cld4h/9a03ec2f826a25be5ab974fdbc540de4/raw/clash-base-config.yaml
+</span></span></code></pre></td></tr></table></div></div><p>What this line does is that it tells the subconverter to use <a class=link href=https://gist.githubusercontent.com/cld4h/9a03ec2f826a25be5ab974fdbc540de4/raw/clash-base-config.yaml target=_blank rel=noopener>the file in the url above</a> instead of the default clash base configuration.</p><p>Or you can just use <a class=link href=https://gist.githubusercontent.com/cld4h/9a03ec2f826a25be5ab974fdbc540de4/raw/config.ini target=_blank rel=noopener>the config.ini here</a></p><p>Sample url:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-txt data-lang=txt><span class=line><span class=cl>https://sub.xeton.dev/sub?        --- backend address
+</span></span><span class=line><span class=cl>target=clash                      --- client type
+</span></span><span class=line><span class=cl>&amp;new_name=true                    --- create a new filename
+</span></span><span class=line><span class=cl>&amp;filename=config.yaml             --- filename
+</span></span><span class=line><span class=cl>&amp;url=                             --- Node info
+</span></span><span class=line><span class=cl>ss%3A%2F%2FYmYtY2ZiOnRlc3QvIUAjOkAxOTIuMTY4LjEwMC4xOjg4ODg%23example-server
+</span></span><span class=line><span class=cl>%7C                               --- the delimiter | to seperate multiple urls
+</span></span><span class=line><span class=cl>ss%3A%2F%2FYmYtY2ZiOnRlc3QvIUAjOkAxOTIuMTY4LjEwMC4xOjg4ODg%23example-server-2
+</span></span><span class=line><span class=cl>&amp;config=                          --- config file for subconverter; .ini format
+</span></span><span class=line><span class=cl>https%3A%2F%2Fgist.githubusercontent.com%2Fcld4h%2F9a03ec2f826a25be5ab974fdbc540de4%2Fraw%2Fconfig.ini
+</span></span><span class=line><span class=cl>                                  --- options below is unnecessary and can be omitted
+</span></span><span class=line><span class=cl>&amp;list=false                       --- 用于输出 Surge Node List 或者 Clash Proxy Provider 或者 Quantumult (X) 的节点订阅 或者 解码后的 SIP002
+</span></span><span class=line><span class=cl>&amp;tfo=false                        --- 用于开启该订阅链接的 TCP Fast Open，默认为 false
+</span></span><span class=line><span class=cl>&amp;scv=false                        --- 用于关闭 TLS 节点的证书检查，默认为 false
+</span></span><span class=line><span class=cl>&amp;fdn=false                        --- 用于过滤目标类型不支持的节点，默认为 true
+</span></span><span class=line><span class=cl>&amp;sort=false                       --- 用于对输出的节点或策略组按节点名进行再次排序，默认为 false
+</span></span></code></pre></td></tr></table></div></div><h4 id=set-up-a-cronjob>Set up a cronjob</h4><p>Create a shell script <code>/etc/clash/update-config.sh</code> with the following content:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-sh data-lang=sh><span class=line><span class=cl><span class=cp>#!/usr/bin/env bash
+</span></span></span><span class=line><span class=cl><span class=cp></span><span class=nb>set</span> -ex
+</span></span><span class=line><span class=cl>/usr/bin/curl <span class=s2>&#34;https://sub.xeton.dev/sub?target=clash&amp;new_name=true&amp;filename=config.yaml&amp;url=XXXXXXXX&amp;config=https%3A%2F%2Fgist.githubusercontent.com%2Fcld4h%2F9a03ec2f826a25be5ab974fdbc540de4%2Fraw%2Fconfig.ini&#34;</span> -o /etc/clash/config.yaml
+</span></span></code></pre></td></tr></table></div></div><p>⚠️ The URL should be replace.</p><p>Manually executing it to make sure the config file is generated successfully.</p><p>Make sure you have the following contents in your <code>config.yaml</code> file for clash:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>tproxy-port</span><span class=p>:</span><span class=w> </span><span class=m>7893</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>dns</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>enable</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>listen</span><span class=p>:</span><span class=w> </span><span class=m>0.0.0.0</span><span class=p>:</span><span class=m>1053</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>enhanced-mode</span><span class=p>:</span><span class=w> </span><span class=l>fake-ip</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>fake-ip-range</span><span class=p>:</span><span class=w> </span><span class=m>198.18.0.1</span><span class=l>/16</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>Add a <a class=link href=https://crontab.guru target=_blank rel=noopener>cronjob</a> by executing <code>sudo crontab -e</code> and add this line to executing the script at 10:00 AM every day.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-sh data-lang=sh><span class=line><span class=cl><span class=m>0</span> <span class=m>10</span> * * * /usr/bin/bash /etc/clash/update-config.sh
+</span></span></code></pre></td></tr></table></div></div></section><footer class=article-footer><section class=article-tags><a href=/blog/tags/clash/>Clash</a>
+<a href=/blog/tags/tproxy/>Tproxy</a>
+<a href=/blog/tags/linux/>Linux</a>
+<a href=/blog/tags/gfw/>GFW</a>
+<a href=/blog/tags/fake-ip/>Fake-Ip</a>
+<a href=/blog/tags/%E9%80%8F%E6%98%8E%E4%BB%A3%E7%90%86/>透明代理</a>
+<a href=/blog/tags/%E7%BF%BB%E5%A2%99/>翻墙</a></section><section class=article-copyright><svg class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span></section></footer><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css integrity=sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV crossorigin=anonymous><script src=https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js integrity=sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8 crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js integrity=sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05 crossorigin=anonymous defer></script><script>window.addEventListener("DOMContentLoaded",()=>{renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"$",right:"$",display:!1},{left:"\\(",right:"\\)",display:!1},{left:"\\[",right:"\\]",display:!0}],ignoredClasses:["gist"]})})</script></article><footer class=site-footer><section class=copyright>&copy;
+2019 -
+2025 cld4h's blog</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.26.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/blog/ts/main.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>
