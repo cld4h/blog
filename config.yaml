@@ -1,7 +1,7 @@
 baseurl: https://cld4h.github.io/blog
 languageCode: en-us
 theme: hugo-theme-stack
-paginate: 5
+pagination.pagerSize: 5
 title: cld4h's blog
 
 # Change it to your Disqus shortname before using
